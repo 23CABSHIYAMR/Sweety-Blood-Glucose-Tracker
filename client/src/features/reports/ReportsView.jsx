@@ -1,15 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { apiRequest } from '../../shared/api/client';
+import { useToast } from '../../shared/context/ToastContext';
 import ReportCard from './ReportCard';
 import GlucoseTrendChart from './GlucoseTrendChart';
-import { Calendar, BarChart2, CalendarDays, History, Clock } from 'lucide-react';
-
-const SLOT_BADGES = {
-  'Morning (fasting)': 'bg-amber-50 text-amber-700 border-amber-200',
-  'After breakfast': 'bg-orange-50 text-orange-700 border-orange-200',
-  'After lunch': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  'After dinner': 'bg-indigo-50 text-indigo-700 border-indigo-200'
-};
+import { SLOT_CONFIG } from '../readings/ReadingsList';
+import { Calendar, CalendarDays, BarChart2, History, Clock, Sparkles } from 'lucide-react';
 
 function formatDisplayDate(dateStr) {
   if (!dateStr) return '';
@@ -35,6 +30,7 @@ function formatRangeDisplay(startDate, endDate) {
 }
 
 export default function ReportsView() {
+  const { showToast } = useToast();
   const [selectedDate, setSelectedDate] = useState(() => {
     const now = new Date();
     const year = now.getFullYear();
@@ -44,40 +40,60 @@ export default function ReportsView() {
   });
 
   const [reportData, setReportData] = useState(null);
+  const [chartPeriod, setChartPeriod] = useState('mtd'); // 'mtd' | 'monthly'
   const [trendReadings, setTrendReadings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSeeding, setIsSeeding] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    async function fetchReports() {
-      setIsLoading(true);
-      setError('');
-      try {
-        const data = await apiRequest(`/reports?date=${selectedDate}`);
-        setReportData(data);
+  const fetchReportsAndChart = useCallback(async () => {
+    if (!selectedDate) return;
+    setIsLoading(true);
+    setError('');
+    try {
+      const data = await apiRequest(`/reports?date=${selectedDate}`);
+      setReportData(data);
 
-        if (data.mtd?.startDate && data.mtd?.endDate) {
-          const readingsRes = await apiRequest(
-            `/readings?startDate=${data.mtd.startDate}&endDate=${data.mtd.endDate}`
-          );
-          setTrendReadings(readingsRes.readings || []);
-        }
-      } catch (err) {
-        setError(err.message || 'Failed to generate reports.');
-      } finally {
-        setIsLoading(false);
+      // Determine date range for chart based on chartPeriod toggle
+      const range = chartPeriod === 'mtd' ? data.mtd : data.monthly;
+      if (range?.startDate && range?.endDate) {
+        const readingsRes = await apiRequest(
+          `/readings?startDate=${range.startDate}&endDate=${range.endDate}`
+        );
+        setTrendReadings(readingsRes.readings || []);
       }
+    } catch (err) {
+      setError(err.message || 'Failed to generate reports.');
+    } finally {
+      setIsLoading(false);
     }
+  }, [selectedDate, chartPeriod]);
 
-    if (selectedDate) {
-      fetchReports();
+  useEffect(() => {
+    fetchReportsAndChart();
+  }, [fetchReportsAndChart]);
+
+  const handleSeedDemoData = async () => {
+    setIsSeeding(true);
+    try {
+      const res = await apiRequest('/readings/seed-demo', { method: 'POST' });
+      showToast(res.message || 'Seeded 45 days of sample glucose data!', 'success');
+      await fetchReportsAndChart();
+    } catch (err) {
+      showToast(err.message || 'Failed to seed sample data.', 'error');
+    } finally {
+      setIsSeeding(false);
     }
-  }, [selectedDate]);
+  };
+
+  const currentPeriodLabel = chartPeriod === 'mtd'
+    ? reportData?.mtd ? formatRangeDisplay(reportData.mtd.startDate, reportData.mtd.endDate) : 'This Month'
+    : reportData?.monthly ? formatRangeDisplay(reportData.monthly.startDate, reportData.monthly.endDate) : 'Previous Month';
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Date Selector Header */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+      {/* Date Selector Header & Quick Demo Seeder */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4">
         <div>
           <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">Clinical Reports</h2>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -85,18 +101,33 @@ export default function ReportsView() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">
-            Anchor Date:
-          </label>
-          <div className="relative flex-1 sm:flex-initial">
-            <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full sm:w-auto pl-9 pr-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-pink-500 transition text-slate-800"
-            />
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          {/* Quick Demo Data Seeder Button */}
+          <button
+            type="button"
+            onClick={handleSeedDemoData}
+            disabled={isSeeding}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-pink-700 bg-pink-50 hover:bg-pink-100 border border-pink-200 transition disabled:opacity-50"
+            title="Populate demo data covering both current and previous months"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-pink-500" />
+            <span>{isSeeding ? 'Seeding...' : '⚡ Seed Demo Data (45 Days)'}</span>
+          </button>
+
+          {/* Anchor Date Picker */}
+          <div className="flex items-center gap-2 flex-1 sm:flex-initial">
+            <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap hidden sm:inline">
+              Anchor:
+            </label>
+            <div className="relative flex-1 sm:flex-initial">
+              <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="w-full sm:w-auto pl-9 pr-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-pink-500 transition text-slate-800"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -139,8 +170,13 @@ export default function ReportsView() {
             />
           </div>
 
-          {/* Trend Chart */}
-          <GlucoseTrendChart readings={trendReadings} />
+          {/* Interactive Trend Chart with Month Switcher */}
+          <GlucoseTrendChart
+            readings={trendReadings}
+            period={chartPeriod}
+            onPeriodChange={setChartPeriod}
+            periodLabel={currentPeriodLabel}
+          />
 
           {/* Daily Slot Breakdown Table */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
@@ -159,7 +195,10 @@ export default function ReportsView() {
             {reportData.daily.readings && reportData.daily.readings.length > 0 ? (
               <div className="divide-y divide-slate-100">
                 {reportData.daily.readings.map((reading) => {
-                  const badgeClass = SLOT_BADGES[reading.slot] || 'bg-slate-100 text-slate-700';
+                  const slotConfig = SLOT_CONFIG[reading.slot] || {
+                    bg: 'bg-slate-100 text-slate-700 border-slate-200',
+                    icon: null
+                  };
 
                   return (
                     <div
@@ -167,8 +206,9 @@ export default function ReportsView() {
                       className="px-4 sm:px-6 py-3 sm:py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition"
                     >
                       <div className="flex items-center gap-2 sm:gap-3">
-                        <span className={`px-2 sm:px-2.5 py-1 rounded-lg text-xs font-medium border ${badgeClass}`}>
-                          {reading.slot}
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border ${slotConfig.bg}`}>
+                          {slotConfig.icon}
+                          <span>{reading.slot}</span>
                         </span>
                       </div>
 

@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
+import { useToast } from '../../shared/context/ToastContext';
 import { Activity, AlertCircle, ArrowRight, Lock, Mail } from 'lucide-react';
 
 export default function LoginPage({ onSwitchToRegister }) {
   const { login } = useAuth();
+  const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -24,7 +26,8 @@ export default function LoginPage({ onSwitchToRegister }) {
 
     setLoading(true);
     try {
-      await login(email, password);
+      const data = await login(email, password);
+      showToast(`Welcome back, ${data.user?.name || 'patient'}!`, 'success');
     } catch (err) {
       setError(err.message || 'Failed to log in. Please check your credentials.');
     } finally {

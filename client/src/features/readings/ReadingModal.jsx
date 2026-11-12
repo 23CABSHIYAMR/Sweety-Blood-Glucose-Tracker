@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, AlertCircle, Calendar, Clock, Activity, Check } from 'lucide-react';
+import { X, AlertCircle, Calendar, Clock, Activity, Check, Sunrise, Sun, Utensils, Moon } from 'lucide-react';
 
 const SLOTS = [
-  'Morning (fasting)',
-  'After breakfast',
-  'After lunch',
-  'After dinner'
+  { id: 'Morning (fasting)', label: 'Morning (fasting)', desc: 'Fasting glucose before breakfast', icon: Sunrise, color: 'text-amber-600 bg-amber-50 border-amber-200 peer-checked:border-amber-500 peer-checked:ring-amber-500' },
+  { id: 'After breakfast', label: 'After breakfast', desc: 'Post-breakfast check', icon: Sun, color: 'text-orange-600 bg-orange-50 border-orange-200 peer-checked:border-orange-500 peer-checked:ring-orange-500' },
+  { id: 'After lunch', label: 'After lunch', desc: 'Post-lunch check', icon: Utensils, color: 'text-emerald-600 bg-emerald-50 border-emerald-200 peer-checked:border-emerald-500 peer-checked:ring-emerald-500' },
+  { id: 'After dinner', label: 'After dinner', desc: 'Post-dinner/bedtime check', icon: Moon, color: 'text-indigo-600 bg-indigo-50 border-indigo-200 peer-checked:border-indigo-500 peer-checked:ring-indigo-500' }
 ];
 
 function getTodayString() {
@@ -19,7 +19,7 @@ function getTodayString() {
 export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, existingReadings = [] }) {
   const today = getTodayString();
   const [date, setDate] = useState(today);
-  const [slot, setSlot] = useState(SLOTS[0]);
+  const [slot, setSlot] = useState(SLOTS[0].id);
   const [value, setValue] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,14 +34,19 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
       const todayUsedSlots = existingReadings
         .filter(r => r.date === today)
         .map(r => r.slot);
-      const firstAvailableSlot = SLOTS.find(s => !todayUsedSlots.includes(s)) || SLOTS[0];
-      setSlot(firstAvailableSlot);
+      const firstAvailable = SLOTS.find(s => !todayUsedSlots.includes(s.id)) || SLOTS[0];
+      setSlot(firstAvailable.id);
       setValue('');
     }
     setError('');
   }, [readingToEdit, isOpen]);
 
   if (!isOpen) return null;
+
+  // Track which slots are already recorded for the currently selected date (excluding the reading being edited)
+  const recordedSlotsForDate = existingReadings
+    .filter(r => r.date === date && (!readingToEdit || r.id !== readingToEdit.id))
+    .map(r => r.slot);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -92,7 +97,7 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="relative bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto">
+      <div className="relative bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-slate-100 mb-4 sm:mb-5">
           <div className="flex items-center gap-2.5">
@@ -123,7 +128,6 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
           {/* Date */}
           <div>
@@ -131,7 +135,7 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
               Date
             </label>
             <div className="relative">
-              <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+              <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
               <input
                 id="reading-date"
                 type="date"
@@ -144,25 +148,71 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
             </div>
           </div>
 
-          {/* Slot */}
+          {/* Time Slot - Enhanced Visual Cards */}
           <div>
-            <label htmlFor="reading-slot" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-              Time Slot
-            </label>
-            <div className="relative">
-              <Clock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
-              <select
-                id="reading-slot"
-                value={slot}
-                onChange={(e) => setSlot(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-pink-500 transition bg-white"
-              >
-                {SLOTS.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+            <div className="flex items-center justify-between mb-1.5">
+              <label htmlFor="reading-slot" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                Time Slot
+              </label>
+              <span className="text-[11px] text-slate-400">
+                {recordedSlotsForDate.length} of 4 logged
+              </span>
+            </div>
+
+            {/* Standard accessible select for keyboard/screen-reader & test matchers */}
+            <select
+              id="reading-slot"
+              value={slot}
+              onChange={(e) => setSlot(e.target.value)}
+              className="sr-only"
+              tabIndex={-1}
+            >
+              {SLOTS.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+
+            {/* Visual Slot Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {SLOTS.map((s) => {
+                const IconComponent = s.icon;
+                const isSelected = slot === s.id;
+                const isAlreadyLogged = recordedSlotsForDate.includes(s.id);
+
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setSlot(s.id)}
+                    className={`flex items-center justify-between p-3 rounded-xl border text-left transition-all ${
+                      isSelected
+                        ? 'border-pink-500 bg-pink-50/70 ring-2 ring-pink-500 shadow-xs'
+                        : isAlreadyLogged
+                        ? 'border-slate-200 bg-slate-50/80 opacity-70 hover:opacity-100'
+                        : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        isSelected ? 'bg-pink-500 text-white' : 'bg-slate-100 text-slate-600'
+                      }`}>
+                        <IconComponent className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-slate-800 truncate">{s.label}</div>
+                        <div className="text-[10px] text-slate-400 truncate">{s.desc}</div>
+                      </div>
+                    </div>
+                    {isAlreadyLogged && !isSelected && (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 whitespace-nowrap ml-1">
+                        Logged
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

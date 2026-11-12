@@ -5,12 +5,23 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(() => localStorage.getItem('sweety_token'));
+  const [accessToken, setAccessToken] = useState(() => localStorage.getItem('sweety_access_token') || localStorage.getItem('sweety_token'));
   const [isLoading, setIsLoading] = useState(true);
 
+  // Sync logout event from token interceptor
+  useEffect(() => {
+    const handleAutoLogout = () => {
+      setAccessToken(null);
+      setUser(null);
+    };
+    window.addEventListener('sweety_logout', handleAutoLogout);
+    return () => window.removeEventListener('sweety_logout', handleAutoLogout);
+  }, []);
+
+  // Verify stored token on boot
   useEffect(() => {
     async function loadUser() {
-      if (!token) {
+      if (!accessToken) {
         setIsLoading(false);
         return;
       }
@@ -20,8 +31,10 @@ export function AuthProvider({ children }) {
         setUser(data.user);
       } catch (err) {
         console.error('Failed to authenticate stored token:', err);
+        localStorage.removeItem('sweety_access_token');
         localStorage.removeItem('sweety_token');
-        setToken(null);
+        localStorage.removeItem('sweety_refresh_token');
+        setAccessToken(null);
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -29,15 +42,22 @@ export function AuthProvider({ children }) {
     }
 
     loadUser();
-  }, [token]);
+  }, [accessToken]);
 
   const login = async (email, password) => {
     const data = await apiRequest('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password })
     });
-    localStorage.setItem('sweety_token', data.token);
-    setToken(data.token);
+
+    const token = data.accessToken || data.token;
+    localStorage.setItem('sweety_access_token', token);
+    localStorage.setItem('sweety_token', token);
+    if (data.refreshToken) {
+      localStorage.setItem('sweety_refresh_token', data.refreshToken);
+    }
+
+    setAccessToken(token);
     setUser(data.user);
     return data;
   };
@@ -47,23 +67,45 @@ export function AuthProvider({ children }) {
       method: 'POST',
       body: JSON.stringify({ name, email, password })
     });
-    localStorage.setItem('sweety_token', data.token);
-    setToken(data.token);
+
+    const token = data.accessToken || data.token;
+    localStorage.setItem('sweety_access_token', token);
+    localStorage.setItem('sweety_token', token);
+    if (data.refreshToken) {
+      localStorage.setItem('sweety_refresh_token', data.refreshToken);
+    }
+
+    setAccessToken(token);
     setUser(data.user);
     return data;
   };
 
-  const logout = () => {
-    localStorage.removeItem('sweety_token');
-    setToken(null);
-    setUser(null);
+  const logout = async () => {
+    const refreshToken = localStorage.getItem('sweety_refresh_token');
+    try {
+      if (refreshToken) {
+        await apiRequest('/auth/logout', {
+          method: 'POST',
+          body: JSON.stringify({ refreshToken })
+        });
+      }
+    } catch (err) {
+      // Ignore network errors on logout
+    } finally {
+      localStorage.removeItem('sweety_access_token');
+      localStorage.removeItem('sweety_token');
+      localStorage.removeItem('sweety_refresh_token');
+      setAccessToken(null);
+      setUser(null);
+    }
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        token,
+        accessToken,
+        token: accessToken,
         isAuthenticated: !!user,
         isLoading,
         login,
@@ -83,4 +125,3 @@ export function useAuth() {
   }
   return context;
 }
-

@@ -1,22 +1,26 @@
-import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, Calendar, ChevronLeft, ChevronRight, Droplet } from 'lucide-react';
+import React from 'react';
+import { Plus, Edit2, Trash2, Calendar, ChevronLeft, ChevronRight, Droplet, Sunrise, Sun, Utensils, Moon } from 'lucide-react';
 
-const SLOT_BADGES = {
+export const SLOT_CONFIG = {
   'Morning (fasting)': {
     bg: 'bg-amber-50 text-amber-700 border-amber-200',
-    dot: 'bg-amber-500'
+    dot: 'bg-amber-500',
+    icon: <Sunrise className="w-3.5 h-3.5 text-amber-600" />
   },
   'After breakfast': {
     bg: 'bg-orange-50 text-orange-700 border-orange-200',
-    dot: 'bg-orange-500'
+    dot: 'bg-orange-500',
+    icon: <Sun className="w-3.5 h-3.5 text-orange-600" />
   },
   'After lunch': {
     bg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    dot: 'bg-emerald-500'
+    dot: 'bg-emerald-500',
+    icon: <Utensils className="w-3.5 h-3.5 text-emerald-600" />
   },
   'After dinner': {
     bg: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-    dot: 'bg-indigo-500'
+    dot: 'bg-indigo-500',
+    icon: <Moon className="w-3.5 h-3.5 text-indigo-600" />
   }
 };
 
@@ -39,8 +43,6 @@ export default function ReadingsList({
   onDeleteClick,
   isLoading
 }) {
-  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
-
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Top Action Bar */}
@@ -110,32 +112,29 @@ export default function ReadingsList({
           </div>
         ) : (
           <>
-            {/* MOBILE VIEW: Touch-friendly Card List (sm:hidden) */}
+            {/* MOBILE VIEW: Touch-friendly Card List */}
             <div className="sm:hidden divide-y divide-slate-100">
               {readings.map((reading) => {
-                const slotConfig = SLOT_BADGES[reading.slot] || {
+                const slotConfig = SLOT_CONFIG[reading.slot] || {
                   bg: 'bg-slate-100 text-slate-700 border-slate-200',
-                  dot: 'bg-slate-400'
+                  icon: null
                 };
                 const statusConfig = getValueBadge(reading.value);
-                const isDeleting = deleteConfirmId === reading.id;
 
                 return (
                   <div key={reading.id} className="p-4 space-y-3">
-                    {/* Top: Slot & Status Badge */}
                     <div className="flex items-center justify-between">
                       <span
                         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border ${slotConfig.bg}`}
                       >
-                        <span className={`w-1.5 h-1.5 rounded-full ${slotConfig.dot}`}></span>
-                        {reading.slot}
+                        {slotConfig.icon}
+                        <span>{reading.slot}</span>
                       </span>
                       <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${statusConfig.class}`}>
                         {statusConfig.label}
                       </span>
                     </div>
 
-                    {/* Middle: Value & Date */}
                     <div className="flex items-baseline justify-between">
                       <div>
                         <span className="text-2xl font-bold text-slate-900 tracking-tight">
@@ -148,52 +147,28 @@ export default function ReadingsList({
                       </div>
                     </div>
 
-                    {/* Bottom: Action buttons */}
-                    <div className="pt-2 border-t border-slate-50 flex items-center justify-end">
-                      {isDeleting ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-rose-600 font-medium">Delete reading?</span>
-                          <button
-                            onClick={() => {
-                              onDeleteClick(reading.id);
-                              setDeleteConfirmId(null);
-                            }}
-                            className="px-3 py-1 text-xs rounded-lg bg-rose-600 text-white font-medium hover:bg-rose-700 transition"
-                          >
-                            Confirm
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirmId(null)}
-                            className="px-3 py-1 text-xs rounded-lg bg-slate-100 text-slate-600 font-medium hover:bg-slate-200 transition"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => onEditClick(reading)}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 transition"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                            <span>Edit</span>
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirmId(reading.id)}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 transition"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span>Delete</span>
-                          </button>
-                        </div>
-                      )}
+                    <div className="pt-2 border-t border-slate-50 flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => onEditClick(reading)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 bg-slate-50 hover:bg-slate-100 transition"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                        <span>Edit</span>
+                      </button>
+                      <button
+                        onClick={() => onDeleteClick(reading)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 transition"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Delete</span>
+                      </button>
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            {/* DESKTOP/TABLET VIEW: Structured Table (hidden sm:block) */}
+            {/* DESKTOP/TABLET VIEW: Structured Table */}
             <div className="hidden sm:block overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead className="bg-slate-50/75 border-b border-slate-100 text-slate-500 text-xs font-semibold uppercase tracking-wider">
@@ -207,11 +182,11 @@ export default function ReadingsList({
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {readings.map((reading) => {
-                    const slotConfig = SLOT_BADGES[reading.slot] || {
-                      bg: 'bg-slate-100 text-slate-700 border-slate-200'
+                    const slotConfig = SLOT_CONFIG[reading.slot] || {
+                      bg: 'bg-slate-100 text-slate-700 border-slate-200',
+                      icon: null
                     };
                     const statusConfig = getValueBadge(reading.value);
-                    const isDeleting = deleteConfirmId === reading.id;
 
                     return (
                       <tr key={reading.id} className="hover:bg-slate-50/50 transition">
@@ -223,8 +198,8 @@ export default function ReadingsList({
                           <span
                             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border ${slotConfig.bg}`}
                           >
-                            <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
-                            {reading.slot}
+                            {slotConfig.icon}
+                            <span>{reading.slot}</span>
                           </span>
                         </td>
 
@@ -242,43 +217,22 @@ export default function ReadingsList({
                         </td>
 
                         <td className="py-3.5 px-6 text-right whitespace-nowrap">
-                          {isDeleting ? (
-                            <div className="inline-flex items-center gap-2">
-                              <span className="text-xs text-rose-600 font-medium">Delete?</span>
-                              <button
-                                onClick={() => {
-                                  onDeleteClick(reading.id);
-                                  setDeleteConfirmId(null);
-                                }}
-                                className="px-2 py-1 text-xs rounded-md bg-rose-600 text-white font-medium hover:bg-rose-700 transition"
-                              >
-                                Yes
-                              </button>
-                              <button
-                                onClick={() => setDeleteConfirmId(null)}
-                                className="px-2 py-1 text-xs rounded-md bg-slate-100 text-slate-600 font-medium hover:bg-slate-200 transition"
-                              >
-                                No
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="inline-flex items-center gap-1">
-                              <button
-                                onClick={() => onEditClick(reading)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
-                                title="Edit reading"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => setDeleteConfirmId(reading.id)}
-                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
-                                title="Delete reading"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          )}
+                          <div className="inline-flex items-center gap-1">
+                            <button
+                              onClick={() => onEditClick(reading)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                              title="Edit reading"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => onDeleteClick(reading)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                              title="Delete reading"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );

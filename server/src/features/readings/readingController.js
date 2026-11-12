@@ -254,11 +254,61 @@ async function deleteReading(req, res, next) {
   }
 }
 
+/**
+ * POST /api/readings/seed-demo
+ * Seeds realistic readings for the authenticated user for the past 45 days
+ */
+async function seedDemoReadings(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const now = new Date();
+
+    // Clear existing readings for fresh demo state
+    await db.query('DELETE FROM readings WHERE user_id = $1', [userId]);
+
+    let totalSeeded = 0;
+    const slots = [
+      { slot: 'Morning (fasting)', base: 82, spread: 25 },
+      { slot: 'After breakfast', base: 115, spread: 35 },
+      { slot: 'After lunch', base: 120, spread: 40 },
+      { slot: 'After dinner', base: 110, spread: 30 }
+    ];
+
+    for (let daysAgo = 45; daysAgo >= 0; daysAgo--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - daysAgo);
+
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+
+      for (const item of slots) {
+        const val = Math.floor(item.base + Math.random() * item.spread);
+        await db.query(
+          `INSERT INTO readings (user_id, date, slot, value, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, NOW(), NOW())`,
+          [userId, dateStr, item.slot, val]
+        );
+        totalSeeded++;
+      }
+    }
+
+    res.json({
+      message: `Successfully seeded ${totalSeeded} readings across the past 45 days!`,
+      count: totalSeeded
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getReadings,
   getReadingById,
   createReading,
   updateReading,
-  deleteReading
+  deleteReading,
+  seedDemoReadings
 };
 

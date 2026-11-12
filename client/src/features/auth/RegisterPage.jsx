@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
+import { useToast } from '../../shared/context/ToastContext';
 import { Activity, AlertCircle, ArrowRight, Lock, Mail, User } from 'lucide-react';
 
 export default function RegisterPage({ onSwitchToLogin }) {
   const { register } = useAuth();
+  const { showToast } = useToast();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,11 +32,17 @@ export default function RegisterPage({ onSwitchToLogin }) {
     setLoading(true);
     try {
       await register(name.trim(), email.trim(), password);
+      showToast('Account registered successfully! Welcome to Sweety.', 'success');
     } catch (err) {
       setError(err.message || 'Failed to create account. Please try again.');
     } finally {
       setLoading(false);
     }
+  };
+  const fillDemoAccount = () => {
+    setEmail('demo@sweety.local');
+    setPassword('Password123!');
+    setName('demo');
   };
 
   return (
@@ -120,6 +128,15 @@ export default function RegisterPage({ onSwitchToLogin }) {
               {!loading && <ArrowRight className="w-4 h-4" />}
             </button>
           </form>
+          <div className="mt-6 pt-5 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={fillDemoAccount}
+              className="w-full py-2 px-3 rounded-lg text-xs font-medium text-pink-700 bg-pink-50 hover:bg-pink-100 transition border border-pink-100"
+            >
+              ⚡ Fill Demo Account (demo@sweety.local)
+            </button>
+          </div>
         </div>
 
         <p className="text-center text-sm text-slate-500 mt-6">

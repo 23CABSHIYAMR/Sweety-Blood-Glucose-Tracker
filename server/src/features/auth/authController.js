@@ -1,18 +1,50 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../../db');
-const { JWT_SECRET } = require('../../middleware/authMiddleware');
+const { JWT_ACCESS_SECRET, JWT_REFRESH_SECRET } = require('../../middleware/authMiddleware');
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ACCESS_TOKEN_EXPIRY = process.env.ACCESS_TOKEN_EXPIRY || '15m';
+const REFRESH_TOKEN_EXPIRY = process.env.REFRESH_TOKEN_EXPIRY || '7d';
 
-function generateToken(user) {
+/**
+ * Generate Access Token (short-lived, e.g. 15m)
+ */
+function generateAccessToken(user) {
   return jwt.sign(
     { id: user.id, email: user.email, name: user.name },
-    JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    JWT_ACCESS_SECRET,
+    { expiresIn: ACCESS_TOKEN_EXPIRY }
   );
 }
 
+/**
+ * Generate Refresh Token (long-lived, e.g. 7d)
+ */
+function generateRefreshToken(user) {
+  return jwt.sign(
+    { id: user.id, email: user.email },
+    JWT_REFRESH_SECRET,
+    { expiresIn: REFRESH_TOKEN_EXPIRY }
+  );
+}
+
+/**
+ * Store or update refresh token in DB
+ */
+async function saveRefreshToken(userId, token) {
+  // 7 days from now
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  await db.query(
+    `INSERT INTO refresh_tokens (user_id, token, expires_at, created_at)
+     VALUES ($1, $2, $3, NOW())`,
+    [userId, token, expiresAt]
+  );
+}
+
+/**
+ * Register a new user
+ */
 async function register(req, res, next) {
   try {
     const { name, email, password } = req.body;
@@ -51,11 +83,16 @@ async function register(req, res, next) {
     );
 
     const newUser = result.rows[0];
-    const token = generateToken(newUser);
+    const accessToken = generateAccessToken(newUser);
+    const refreshToken = generateRefreshToken(newUser);
+
+    await saveRefreshToken(newUser.id, refreshToken);
 
     res.status(201).json({
       message: 'Registration successful',
-      token,
+      token: accessToken, // backward compatibility
+      accessToken,
+      refreshToken,
       user: {
         id: newUser.id,
         name: newUser.name,
@@ -67,6 +104,9 @@ async function register(req, res, next) {
   }
 }
 
+/**
+ * Log in an existing user
+ */
 async function login(req, res, next) {
   try {
     const { email, password } = req.body;
@@ -93,11 +133,16 @@ async function login(req, res, next) {
       return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
-    const token = generateToken(user);
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    await saveRefreshToken(user.id, refreshToken);
 
     res.json({
       message: 'Login successful',
-      token,
+      token: accessToken, // backward compatibility
+      accessToken,
+      refreshToken,
       user: {
         id: user.id,
         name: user.name,
@@ -109,6 +154,88 @@ async function login(req, res, next) {
   }
 }
 
+/**
+ * Refresh access token using valid refresh token
+ */
+async function refresh(req, res, next) {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({ error: 'Refresh token is required.' });
+    }
+
+    // Check token in DB
+    const tokenRecord = await db.query(
+      'SELECT id, user_id, expires_at FROM refresh_tokens WHERE token = $1',
+      [refreshToken]
+    );
+
+    if (tokenRecord.rows.length === 0) {
+      return res.status(401).json({ error: 'Invalid or revoked refresh token. Please log in again.' });
+    }
+
+    // Check expiration in DB
+    if (new Date(tokenRecord.rows[0].expires_at) < new Date()) {
+      await db.query('DELETE FROM refresh_tokens WHERE id = $1', [tokenRecord.rows[0].id]);
+      return res.status(401).json({ error: 'Refresh token has expired. Please log in again.' });
+    }
+
+    // Verify JWT cryptographic signature
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
+    } catch (err) {
+      return res.status(401).json({ error: 'Invalid refresh token.' });
+    }
+
+    // Lookup user to populate access token payload
+    const userRes = await db.query(
+      'SELECT id, name, email FROM users WHERE id = $1',
+      [decoded.id]
+    );
+
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    const user = userRes.rows[0];
+
+    // Token rotation: delete old refresh token and issue a fresh pair
+    await db.query('DELETE FROM refresh_tokens WHERE id = $1', [tokenRecord.rows[0].id]);
+
+    const newAccessToken = generateAccessToken(user);
+    const newRefreshToken = generateRefreshToken(user);
+    await saveRefreshToken(user.id, newRefreshToken);
+
+    res.json({
+      token: newAccessToken,
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Logout and revoke refresh token
+ */
+async function logout(req, res, next) {
+  try {
+    const { refreshToken } = req.body;
+    if (refreshToken) {
+      await db.query('DELETE FROM refresh_tokens WHERE token = $1', [refreshToken]);
+    }
+    res.json({ message: 'Logged out successfully.' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * Get current user profile
+ */
 async function getMe(req, res, next) {
   try {
     const result = await db.query(
@@ -129,6 +256,7 @@ async function getMe(req, res, next) {
 module.exports = {
   register,
   login,
+  refresh,
+  logout,
   getMe
 };
-

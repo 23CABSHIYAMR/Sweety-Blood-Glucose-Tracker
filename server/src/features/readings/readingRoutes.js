@@ -6,6 +6,7 @@ const { authenticateToken } = require('../../middleware/authMiddleware');
 router.use(authenticateToken);
 
 router.get('/', readingController.getReadings);
+router.post('/seed-demo', readingController.seedDemoReadings);
 router.get('/:id', readingController.getReadingById);
 router.post('/', readingController.createReading);
 router.put('/:id', readingController.updateReading);
