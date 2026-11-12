@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ReadingsList from './components/ReadingsList';
 import ReadingModal from './components/ReadingModal';
+import ReportsView from './components/ReportsView';
 import { Activity } from 'lucide-react';
 
 function Dashboard({ activeTab, onTabChange }) {
@@ -93,9 +94,7 @@ function Dashboard({ activeTab, onTabChange }) {
           isLoading={isLoading}
         />
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500">
-          Reports tab will be active in next phase.
-        </div>
+        <ReportsView />
       )}
 
       {/* Add / Edit Reading Modal */}
