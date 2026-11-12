@@ -125,15 +125,16 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} noValidate className="space-y-4">
           {/* Date */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label htmlFor="reading-date" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
               Date
             </label>
             <div className="relative">
               <Calendar className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
               <input
+                id="reading-date"
                 type="date"
                 value={date}
                 max={today}
@@ -146,12 +147,13 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
 
           {/* Slot */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label htmlFor="reading-slot" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
               Time Slot
             </label>
             <div className="relative">
               <Clock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
               <select
+                id="reading-slot"
                 value={slot}
                 onChange={(e) => setSlot(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-pink-500 transition bg-white"
@@ -167,11 +169,12 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
 
           {/* Value */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label htmlFor="reading-value" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
               Glucose Value (mg/dl)
             </label>
             <div className="relative">
               <input
+                id="reading-value"
                 type="number"
                 min="40"
                 max="600"

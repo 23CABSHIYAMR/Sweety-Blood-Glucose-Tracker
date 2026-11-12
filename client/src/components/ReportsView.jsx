@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiRequest } from '../api/client';
 import ReportCard from './ReportCard';
+import GlucoseTrendChart from './GlucoseTrendChart';
 import { Calendar, BarChart2, CalendarDays, History, Droplet, Clock } from 'lucide-react';
 
 const SLOT_BADGES = {
@@ -43,6 +44,7 @@ export default function ReportsView() {
   });
 
   const [reportData, setReportData] = useState(null);
+  const [trendReadings, setTrendReadings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -53,6 +55,14 @@ export default function ReportsView() {
       try {
         const data = await apiRequest(`/reports?date=${selectedDate}`);
         setReportData(data);
+
+        // Fetch readings for trend chart in MTD window
+        if (data.mtd?.startDate && data.mtd?.endDate) {
+          const readingsRes = await apiRequest(
+            `/readings?startDate=${data.mtd.startDate}&endDate=${data.mtd.endDate}`
+          );
+          setTrendReadings(readingsRes.readings || []);
+        }
       } catch (err) {
         setError(err.message || 'Failed to generate reports.');
       } finally {
@@ -132,6 +142,9 @@ export default function ReportsView() {
               colorTheme="emerald"
             />
           </div>
+
+          {/* Bonus: Glucose Trend Line Chart */}
+          <GlucoseTrendChart readings={trendReadings} />
 
           {/* Daily Slot Breakdown Table */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
