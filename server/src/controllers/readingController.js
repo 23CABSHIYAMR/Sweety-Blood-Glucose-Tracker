@@ -1,0 +1,300 @@
+const db = require('../db');
+const { SLOTS, formatSlotError } = require('../utils/constants');
+
+/**
+ * Helper to get today's date in YYYY-MM-DD
+ */
+function getTodayString() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * Validate reading payload
+ */
+async function validateReadingInput({ userId, date, slot, value, readingId = null }) {
+  // 1. Value is required
+  if (value === undefined || value === null || value === '') {
+    return { valid: false, status: 400, message: 'Please enter a glucose value.' };
+  }
+
+  // 2. Value must be a whole number between 40 and 600
+  const numValue = Number(value);
+  if (!Number.isInteger(numValue) || numValue < 40 || numValue > 600) {
+    return { valid: false, status: 400, message: 'Value must be between 40 and 600 mg/dl.' };
+  }
+
+  // 3. Date is required and valid
+  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return { valid: false, status: 400, message: 'Please provide a valid date in YYYY-MM-DD format.' };
+  }
+
+  // 4. Date cannot be in the future
+  const today = getTodayString();
+  if (date > today) {
+    return { valid: false, status: 400, message: 'Date cannot be in the future.' };
+  }
+
+  // 5. Slot is valid
+  if (!slot || !SLOTS.includes(slot)) {
+    return {
+      valid: false,
+      status: 400,
+      message: `Invalid slot. Must be one of: ${SLOTS.join(', ')}`
+    };
+  }
+
+  // 6. Only one reading per slot per day
+  let slotCheckQuery = 'SELECT id FROM readings WHERE user_id = $1 AND date = $2 AND slot = $3';
+  const slotCheckParams = [userId, date, slot];
+  if (readingId) {
+    slotCheckQuery += ' AND id != $4';
+    slotCheckParams.push(readingId);
+  }
+
+  const existingSlot = await db.query(slotCheckQuery, slotCheckParams);
+  if (existingSlot.rows.length > 0) {
+    return {
+      valid: false,
+      status: 400,
+      message: formatSlotError(slot)
+    };
+  }
+
+  // 7. Maximum 4 readings per day (for new readings or date change)
+  if (!readingId) {
+    const countCheck = await db.query(
+      'SELECT COUNT(*) AS total FROM readings WHERE user_id = $1 AND date = $2',
+      [userId, date]
+    );
+    if (parseInt(countCheck.rows[0].total, 10) >= 4) {
+      return { valid: false, status: 400, message: 'You can add only 4 readings per day.' };
+    }
+  }
+
+  return { valid: true, sanitizedValue: numValue };
+}
+
+/**
+ * Helper to normalize reading object date output
+ */
+function formatReading(r) {
+  if (!r) return r;
+  let dateStr = r.date;
+  if (dateStr instanceof Date) {
+    const year = dateStr.getFullYear();
+    const month = String(dateStr.getMonth() + 1).padStart(2, '0');
+    const day = String(dateStr.getDate()).padStart(2, '0');
+    dateStr = `${year}-${month}-${day}`;
+  } else if (typeof dateStr === 'string' && dateStr.includes('T')) {
+    dateStr = dateStr.split('T')[0];
+  }
+  return {
+    ...r,
+    date: dateStr
+  };
+}
+
+/**
+ * GET /api/readings
+ * Supports optional ?date=YYYY-MM-DD, ?startDate=&endDate=, and ?page=1&limit=20 pagination
+ */
+async function getReadings(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { date, startDate, endDate, page, limit } = req.query;
+
+    let queryText = 'SELECT id, user_id, date, slot, value, created_at, updated_at FROM readings WHERE user_id = $1';
+    const params = [userId];
+    let paramIndex = 2;
+
+    if (date) {
+      queryText += ` AND date = $${paramIndex}`;
+      params.push(date);
+      paramIndex++;
+    } else if (startDate && endDate) {
+      queryText += ` AND date BETWEEN $${paramIndex} AND $${paramIndex + 1}`;
+      params.push(startDate, endDate);
+      paramIndex += 2;
+    }
+
+    // Sort by date DESC, then slot
+    queryText += ' ORDER BY date DESC, id DESC';
+
+    // Pagination bonus support
+    if (page && limit) {
+      const pageNum = Math.max(1, parseInt(page, 10) || 1);
+      const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10) || 20));
+      const offset = (pageNum - 1) * limitNum;
+
+      // Count total records
+      const countRes = await db.query(
+        `SELECT COUNT(*) FROM (${queryText}) AS filtered`,
+        params
+      );
+      const total = parseInt(countRes.rows[0].count, 10);
+
+      queryText += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+      params.push(limitNum, offset);
+
+      const result = await db.query(queryText, params);
+
+      return res.json({
+        readings: result.rows.map(formatReading),
+        pagination: {
+          total,
+          page: pageNum,
+          limit: limitNum,
+          totalPages: Math.ceil(total / limitNum)
+        }
+      });
+    }
+
+    const result = await db.query(queryText, params);
+    res.json({ readings: result.rows.map(formatReading) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * GET /api/readings/:id
+ */
+async function getReadingById(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const result = await db.query(
+      `SELECT id, user_id, date, slot, value, created_at, updated_at
+       FROM readings WHERE id = $1 AND user_id = $2`,
+      [id, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Reading not found.' });
+    }
+
+    res.json({ reading: formatReading(result.rows[0]) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
+ * POST /api/readings
+ */
+async function createReading(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { date, slot, value } = req.body;
+
+    const validation = await validateReadingInput({ userId, date, slot, value });
+    if (!validation.valid) {
+      return res.status(validation.status).json({ error: validation.message });
+    }
+
+    const result = await db.query(
+      `INSERT INTO readings (user_id, date, slot, value, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, NOW(), NOW())
+       RETURNING id, user_id, date, slot, value, created_at, updated_at`,
+      [userId, date, slot, validation.sanitizedValue]
+    );
+
+    res.status(201).json({
+      message: 'Reading added successfully.',
+      reading: formatReading(result.rows[0])
+    });
+  } catch (err) {
+    // Catch compound unique violation error if any race condition occurs
+    if (err.code === '23505') {
+      return res.status(400).json({ error: formatSlotError(req.body.slot) });
+    }
+    next(err);
+  }
+}
+
+/**
+ * PUT /api/readings/:id
+ */
+async function updateReading(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+    const { date, slot, value } = req.body;
+
+    // Check existing
+    const existing = await db.query(
+      'SELECT id FROM readings WHERE id = $1 AND user_id = $2',
+      [id, userId]
+    );
+
+    if (existing.rows.length === 0) {
+      return res.status(404).json({ error: 'Reading not found.' });
+    }
+
+    const validation = await validateReadingInput({
+      userId,
+      date,
+      slot,
+      value,
+      readingId: id
+    });
+
+    if (!validation.valid) {
+      return res.status(validation.status).json({ error: validation.message });
+    }
+
+    const result = await db.query(
+      `UPDATE readings
+       SET date = $1, slot = $2, value = $3, updated_at = NOW()
+       WHERE id = $4 AND user_id = $5
+       RETURNING id, user_id, date, slot, value, created_at, updated_at`,
+      [date, slot, validation.sanitizedValue, id, userId]
+    );
+
+    res.json({
+      message: 'Reading updated successfully.',
+      reading: formatReading(result.rows[0])
+    });
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(400).json({ error: formatSlotError(req.body.slot) });
+    }
+    next(err);
+  }
+}
+
+/**
+ * DELETE /api/readings/:id
+ */
+async function deleteReading(req, res, next) {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    const result = await db.query(
+      'DELETE FROM readings WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Reading not found.' });
+    }
+
+    res.json({ message: 'Reading deleted successfully.' });
+  } catch (err) {
+    next(err);
+  }
+}
+
+module.exports = {
+  getReadings,
+  getReadingById,
+  createReading,
+  updateReading,
+  deleteReading
+};

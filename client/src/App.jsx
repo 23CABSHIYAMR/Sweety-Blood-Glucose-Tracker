@@ -1,9 +1,117 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { apiRequest } from './api/client';
 import Navbar from './components/Navbar';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ReadingsList from './components/ReadingsList';
+import ReadingModal from './components/ReadingModal';
 import { Activity } from 'lucide-react';
+
+function Dashboard({ activeTab, onTabChange }) {
+  const [readings, setReadings] = useState([]);
+  const [pagination, setPagination] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [dateFilter, setDateFilter] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [readingToEdit, setReadingToEdit] = useState(null);
+
+  const fetchReadings = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      let endpoint = `/readings?page=${currentPage}&limit=20`;
+      if (dateFilter) {
+        endpoint += `&date=${dateFilter}`;
+      }
+      const data = await apiRequest(endpoint);
+      setReadings(data.readings || []);
+      setPagination(data.pagination || null);
+    } catch (err) {
+      console.error('Failed to load readings:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentPage, dateFilter]);
+
+  useEffect(() => {
+    fetchReadings();
+  }, [fetchReadings]);
+
+  const handleSaveReading = async (readingData) => {
+    if (readingData.id) {
+      // Update
+      await apiRequest(`/readings/${readingData.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(readingData)
+      });
+    } else {
+      // Create
+      await apiRequest('/readings', {
+        method: 'POST',
+        body: JSON.stringify(readingData)
+      });
+    }
+    await fetchReadings();
+  };
+
+  const handleDeleteReading = async (id) => {
+    try {
+      await apiRequest(`/readings/${id}`, {
+        method: 'DELETE'
+      });
+      await fetchReadings();
+    } catch (err) {
+      alert(err.message || 'Failed to delete reading.');
+    }
+  };
+
+  return (
+    <div>
+      {activeTab === 'readings' ? (
+        <ReadingsList
+          readings={readings}
+          pagination={pagination}
+          currentPage={currentPage}
+          onPageChange={setCurrentPage}
+          dateFilter={dateFilter}
+          onDateFilterChange={(val) => {
+            setDateFilter(val);
+            setCurrentPage(1);
+          }}
+          onAddClick={() => {
+            setReadingToEdit(null);
+            setIsModalOpen(true);
+          }}
+          onEditClick={(reading) => {
+            setReadingToEdit(reading);
+            setIsModalOpen(true);
+          }}
+          onDeleteClick={handleDeleteReading}
+          isLoading={isLoading}
+        />
+      ) : (
+        <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500">
+          Reports tab will be active in next phase.
+        </div>
+      )}
+
+      {/* Add / Edit Reading Modal */}
+      <ReadingModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setReadingToEdit(null);
+        }}
+        onSave={handleSaveReading}
+        readingToEdit={readingToEdit}
+        existingReadings={readings}
+      />
+    </div>
+  );
+}
 
 function MainApp() {
   const { user, isLoading } = useAuth();
@@ -35,10 +143,7 @@ function MainApp() {
             <RegisterPage onSwitchToLogin={() => setAuthView('login')} />
           )
         ) : (
-          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-            <h2 className="text-xl font-bold text-slate-800">Welcome, {user.name}!</h2>
-            <p className="text-sm text-slate-500 mt-1">Active tab: {activeTab}</p>
-          </div>
+          <Dashboard activeTab={activeTab} onTabChange={setActiveTab} />
         )}
       </main>
 
