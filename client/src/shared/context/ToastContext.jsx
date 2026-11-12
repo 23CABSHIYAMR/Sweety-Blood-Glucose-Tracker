@@ -29,26 +29,26 @@ export function ToastProvider({ children }) {
         {toasts.map((toast) => {
           const config = {
             success: {
-              bg: 'bg-emerald-50 border-emerald-200 text-emerald-800',
-              icon: <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+              bg: 'bg-emerald-50 dark:bg-emerald-950/90 border-emerald-200 dark:border-emerald-800/70 text-emerald-800 dark:text-emerald-200',
+              icon: <CheckCircle2 className="w-5 h-5 text-emerald-500 dark:text-emerald-400 flex-shrink-0" />
             },
             error: {
-              bg: 'bg-rose-50 border-rose-200 text-rose-800',
-              icon: <AlertCircle className="w-5 h-5 text-rose-500 flex-shrink-0" />
+              bg: 'bg-rose-50 dark:bg-rose-950/90 border-rose-200 dark:border-rose-800/70 text-rose-800 dark:text-rose-200',
+              icon: <AlertCircle className="w-5 h-5 text-rose-500 dark:text-rose-400 flex-shrink-0" />
             },
             info: {
-              bg: 'bg-slate-900 border-slate-800 text-white',
+              bg: 'bg-slate-900/95 dark:bg-slate-800/95 border-slate-800 dark:border-slate-700 text-white',
               icon: <Info className="w-5 h-5 text-pink-400 flex-shrink-0" />
             }
           }[toast.type] || {
-            bg: 'bg-slate-900 border-slate-800 text-white',
+            bg: 'bg-slate-900/95 dark:bg-slate-800/95 border-slate-800 dark:border-slate-700 text-white',
             icon: <Info className="w-5 h-5 text-pink-400 flex-shrink-0" />
           };
 
           return (
             <div
               key={toast.id}
-              className={`pointer-events-auto flex items-start gap-3 p-4 rounded-2xl border shadow-lg transition-all animate-in slide-in-from-top-3 duration-200 ${config.bg}`}
+              className={`pointer-events-auto flex items-start gap-3 p-4 rounded-2xl border shadow-xl backdrop-blur-md transition-all animate-in slide-in-from-top-3 duration-200 ${config.bg}`}
             >
               {config.icon}
               <p className="text-xs sm:text-sm font-medium flex-1 pt-0.5">{toast.message}</p>

@@ -2,8 +2,146 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  min-height: 100vh;
+/* ==========================================================================
+   SWEETY DESIGN SYSTEM COLOR PALETTES
+   - Light Palette (:root)
+   - Dark Palette (.dark)
+   ========================================================================== */
+
+:root {
+  /* System / App Backgrounds */
+  --bg-app: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-elevated: #f1f5f9;
+  --bg-surface-muted: #f8fafc;
+
+  /* Borders */
+  --border-subtle: #e2e8f0;
+  --border-default: #cbd5e1;
+  --border-strong: #94a3b8;
+
+  /* Typography */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --text-inverse: #ffffff;
+
+  /* Brand Colors (Sweet Pink / Rose) */
+  --brand-50: #fdf2f8;
+  --brand-100: #fce7f3;
+  --brand-200: #fbcfe8;
+  --brand-300: #f9a8d4;
+  --brand-400: #f472b6;
+  --brand-500: #ec4899;
+  --brand-600: #db2777;
+  --brand-700: #be185d;
+  --brand-800: #9d174d;
+  --brand-900: #831843;
+
+  /* Clinical Glucose Status Tiers (Light) */
+  --status-normal-bg: #ecfdf5;
+  --status-normal-text: #047857;
+  --status-normal-border: #a7f3d0;
+
+  --status-elevated-bg: #fffbeb;
+  --status-elevated-text: #b45309;
+  --status-elevated-border: #fde68a;
+
+  --status-high-bg: #fff1f2;
+  --status-high-text: #be123c;
+  --status-high-border: #fecdd3;
+
+  --status-low-bg: #eff6ff;
+  --status-low-text: #1d4ed8;
+  --status-low-border: #bfdbfe;
+
+  color-scheme: light;
 }
 
+.dark {
+  /* System / App Backgrounds */
+  --bg-app: #090d16;
+  --bg-surface: #0f172a;
+  --bg-surface-elevated: #1e293b;
+  --bg-surface-muted: #131d33;
+
+  /* Borders */
+  --border-subtle: #1e293b;
+  --border-default: #334155;
+  --border-strong: #475569;
+
+  /* Typography */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-inverse: #0f172a;
+
+  /* Brand Colors (Dark contrast-tuned) */
+  --brand-50: #2a1122;
+  --brand-100: #421434;
+  --brand-200: #701a51;
+  --brand-300: #9d174d;
+  --brand-400: #db2777;
+  --brand-500: #f472b6;
+  --brand-600: #ec4899;
+  --brand-700: #fbcfe8;
+  --brand-800: #fce7f3;
+  --brand-900: #fdf2f8;
+
+  /* Clinical Glucose Status Tiers (Dark) */
+  --status-normal-bg: rgba(6, 78, 59, 0.35);
+  --status-normal-text: #34d399;
+  --status-normal-border: rgba(52, 211, 153, 0.3);
+
+  --status-elevated-bg: rgba(120, 53, 15, 0.35);
+  --status-elevated-text: #fbbf24;
+  --status-elevated-border: rgba(251, 191, 36, 0.3);
+
+  --status-high-bg: rgba(136, 19, 55, 0.35);
+  --status-high-text: #fb7185;
+  --status-high-border: rgba(251, 113, 133, 0.3);
+
+  --status-low-bg: rgba(30, 58, 138, 0.35);
+  --status-low-text: #60a5fa;
+  --status-low-border: rgba(96, 165, 250, 0.3);
+
+  color-scheme: dark;
+}
+
+/* Base Body Styles */
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  min-height: 100vh;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Scrollbars for Dark/Light Themes */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
