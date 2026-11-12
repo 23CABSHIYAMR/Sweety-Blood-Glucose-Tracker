@@ -91,15 +91,16 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
   const status = getGlucoseStatus(value);
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+      <div className="relative bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-slate-100 mb-4 sm:mb-5">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center flex-shrink-0">
               <Activity className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900">
                 {readingToEdit ? 'Edit Reading' : 'Record Glucose Reading'}
               </h3>
               <p className="text-xs text-slate-500">Record blood sugar level in mg/dl</p>
@@ -107,20 +108,24 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition"
+            aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        {/* Error Banner */}
         {error && (
-          <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm flex items-start gap-2.5">
+          <div className="mb-4 sm:mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs sm:text-sm flex items-start gap-2.5">
             <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-500" />
             <span className="font-medium">{error}</span>
           </div>
         )}
 
+        {/* Form */}
         <form onSubmit={handleSubmit} noValidate className="space-y-4">
+          {/* Date */}
           <div>
             <label htmlFor="reading-date" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
               Date
@@ -139,12 +144,13 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
             </div>
           </div>
 
+          {/* Slot */}
           <div>
             <label htmlFor="reading-slot" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
               Time Slot
             </label>
             <div className="relative">
-              <Clock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+              <Clock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
               <select
                 id="reading-slot"
                 value={slot}
@@ -160,6 +166,7 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
             </div>
           </div>
 
+          {/* Value */}
           <div>
             <label htmlFor="reading-value" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
               Glucose Value (mg/dl)
@@ -189,19 +196,20 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
             <p className="text-xs text-slate-400 mt-1">Acceptable range: 40 to 600 mg/dl.</p>
           </div>
 
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+          {/* Action buttons */}
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-3 border-t border-slate-100">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition text-center"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-sm font-medium shadow-sm transition disabled:opacity-50"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-sm font-medium shadow-sm transition disabled:opacity-50"
             >
               <Check className="w-4 h-4" />
               <span>{loading ? 'Saving...' : readingToEdit ? 'Update Reading' : 'Save Reading'}</span>

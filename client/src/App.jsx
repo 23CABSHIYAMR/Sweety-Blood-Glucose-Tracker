@@ -131,7 +131,8 @@ function MainApp() {
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* pb-20 on mobile ensures bottom nav bar does not overlap content */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 pb-20 sm:pb-8">
         {!user ? (
           authView === 'login' ? (
             <LoginPage onSwitchToRegister={() => setAuthView('register')} />
@@ -143,7 +144,7 @@ function MainApp() {
         )}
       </main>
 
-      <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-400">
+      <footer className="hidden sm:block border-t border-slate-200 py-6 text-center text-xs text-slate-400">
         Sweety Blood Glucose Tracker • Built with React, Node.js & PostgreSQL
       </footer>
     </div>

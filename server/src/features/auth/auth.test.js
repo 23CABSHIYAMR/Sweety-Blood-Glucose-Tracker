@@ -96,3 +96,4 @@ describe('Authentication API (Feature: Auth)', () => {
     expect(res.status).toBe(401);
   });
 });
+

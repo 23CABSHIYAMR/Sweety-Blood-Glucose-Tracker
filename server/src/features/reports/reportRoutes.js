@@ -7,3 +7,4 @@ router.use(authenticateToken);
 router.get('/', reportController.getReports);
 
 module.exports = router;
+

@@ -26,61 +26,64 @@ export default function ReportCard({ title, subtitle, stats, icon: Icon, colorTh
   }[colorTheme] || themeColors.pink;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col justify-between">
+    <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 shadow-xs flex flex-col justify-between">
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl ${themeColors.bg} ${themeColors.text} flex items-center justify-center`}>
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl ${themeColors.bg} ${themeColors.text} flex items-center justify-center flex-shrink-0`}>
               <Icon className="w-5 h-5" />
             </div>
-            <div>
-              <h3 className="text-base font-bold text-slate-900">{title}</h3>
-              <p className="text-xs text-slate-500 font-medium">{subtitle}</p>
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">{title}</h3>
+              <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">{subtitle}</p>
             </div>
           </div>
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${themeColors.pill}`}>
+          <span className={`text-[11px] sm:text-xs font-semibold px-2 sm:px-2.5 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${themeColors.pill}`}>
             {count} {count === 1 ? 'Reading' : 'Readings'}
           </span>
         </div>
 
         {count === 0 ? (
-          <div className="mt-5 p-5 rounded-xl bg-slate-50 border border-slate-100 text-center">
+          <div className="mt-4 sm:mt-5 p-4 sm:p-5 rounded-xl bg-slate-50 border border-slate-100 text-center">
             <AlertCircle className="w-5 h-5 mx-auto text-slate-400 mb-1.5" />
             <p className="text-xs font-medium text-slate-600">No readings recorded</p>
             <p className="text-xs text-slate-400 mt-0.5">There is no data available for this date range.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-3 mt-5">
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-              <div className="flex items-center gap-1 text-rose-500 text-xs font-semibold mb-1">
-                <TrendingUp className="w-3.5 h-3.5" />
-                <span>Highest</span>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-4 sm:mt-5">
+            {/* Highest */}
+            <div className="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100 flex flex-col justify-between">
+              <div className="flex items-center gap-1 text-rose-500 text-[10px] sm:text-xs font-semibold mb-1">
+                <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+                <span className="truncate">High</span>
               </div>
-              <div className="text-lg font-bold text-slate-900">
-                {highest}
-                <span className="text-xs font-normal text-slate-400 ml-1">mg/dl</span>
-              </div>
-            </div>
-
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-              <div className="flex items-center gap-1 text-blue-500 text-xs font-semibold mb-1">
-                <TrendingDown className="w-3.5 h-3.5" />
-                <span>Lowest</span>
-              </div>
-              <div className="text-lg font-bold text-slate-900">
-                {lowest}
-                <span className="text-xs font-normal text-slate-400 ml-1">mg/dl</span>
+              <div>
+                <span className="text-base sm:text-lg font-bold text-slate-900">{highest}</span>
+                <span className="text-[10px] sm:text-xs font-normal text-slate-400 block sm:inline sm:ml-1">mg/dl</span>
               </div>
             </div>
 
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-              <div className="flex items-center gap-1 text-emerald-500 text-xs font-semibold mb-1">
-                <Activity className="w-3.5 h-3.5" />
-                <span>Average</span>
+            {/* Lowest */}
+            <div className="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100 flex flex-col justify-between">
+              <div className="flex items-center gap-1 text-blue-500 text-[10px] sm:text-xs font-semibold mb-1">
+                <TrendingDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+                <span className="truncate">Low</span>
               </div>
-              <div className="text-lg font-bold text-slate-900">
-                {average}
-                <span className="text-xs font-normal text-slate-400 ml-1">mg/dl</span>
+              <div>
+                <span className="text-base sm:text-lg font-bold text-slate-900">{lowest}</span>
+                <span className="text-[10px] sm:text-xs font-normal text-slate-400 block sm:inline sm:ml-1">mg/dl</span>
+              </div>
+            </div>
+
+            {/* Average */}
+            <div className="bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-100 flex flex-col justify-between">
+              <div className="flex items-center gap-1 text-emerald-500 text-[10px] sm:text-xs font-semibold mb-1">
+                <Activity className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
+                <span className="truncate">Avg</span>
+              </div>
+              <div>
+                <span className="text-base sm:text-lg font-bold text-slate-900">{average}</span>
+                <span className="text-[10px] sm:text-xs font-normal text-slate-400 block sm:inline sm:ml-1">mg/dl</span>
               </div>
             </div>
           </div>

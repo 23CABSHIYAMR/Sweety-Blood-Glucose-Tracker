@@ -75,26 +75,27 @@ export default function ReportsView() {
   }, [selectedDate]);
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Date Selector Header */}
+      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h2 className="text-lg font-bold text-slate-900 tracking-tight">Clinical Reports</h2>
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">Clinical Reports</h2>
           <p className="text-xs text-slate-500 mt-0.5">
             Compare daily performance against Month-to-Date and Previous Month metrics
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
+          <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">
             Anchor Date:
           </label>
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-initial">
             <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="pl-9 pr-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-pink-500 transition text-slate-800"
+              className="w-full sm:w-auto pl-9 pr-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-slate-50 hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-pink-500 transition text-slate-800"
             />
           </div>
         </div>
@@ -110,8 +111,9 @@ export default function ReportsView() {
           {error}
         </div>
       ) : reportData ? (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="space-y-4 sm:space-y-6">
+          {/* 3 Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
             <ReportCard
               title="Daily Report"
               subtitle={formatDisplayDate(reportData.daily.date)}
@@ -137,17 +139,19 @@ export default function ReportsView() {
             />
           </div>
 
+          {/* Trend Chart */}
           <GlucoseTrendChart readings={trendReadings} />
 
+          {/* Daily Slot Breakdown Table */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-0">
               <div>
-                <h3 className="text-sm font-bold text-slate-900">
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900">
                   Daily Slot Readings ({formatDisplayDate(reportData.daily.date)})
                 </h3>
-                <p className="text-xs text-slate-500">Breakdown of recorded slots for the selected day</p>
+                <p className="text-[11px] sm:text-xs text-slate-500">Breakdown of recorded slots for this date</p>
               </div>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
+              <span className="text-[11px] sm:text-xs font-semibold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-slate-100 text-slate-600 mt-1 sm:mt-0">
                 {reportData.daily.count} of 4 slots recorded
               </span>
             </div>
@@ -160,16 +164,16 @@ export default function ReportsView() {
                   return (
                     <div
                       key={reading.id}
-                      className="px-6 py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition"
+                      className="px-4 sm:px-6 py-3 sm:py-3.5 flex items-center justify-between hover:bg-slate-50/50 transition"
                     >
-                      <div className="flex items-center gap-3">
-                        <span className={`px-2.5 py-1 rounded-lg text-xs font-medium border ${badgeClass}`}>
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <span className={`px-2 sm:px-2.5 py-1 rounded-lg text-xs font-medium border ${badgeClass}`}>
                           {reading.slot}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold text-slate-900">{reading.value}</span>
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        <span className="text-base sm:text-lg font-bold text-slate-900">{reading.value}</span>
                         <span className="text-xs font-medium text-slate-400">mg/dl</span>
                       </div>
                     </div>

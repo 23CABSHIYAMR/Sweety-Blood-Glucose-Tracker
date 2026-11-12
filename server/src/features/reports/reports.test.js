@@ -107,3 +107,4 @@ describe('Reports API (Feature: Reports)', () => {
     expect(res.body.error).toMatch(/valid date in YYYY-MM-DD/i);
   });
 });
+
