@@ -1,9 +1,6 @@
-const db = require('../db');
-const { SLOTS, formatSlotError } = require('../utils/constants');
+const db = require('../../db');
+const { SLOTS, formatSlotError } = require('../../utils/constants');
 
-/**
- * Helper to get today's date in YYYY-MM-DD
- */
 function getTodayString() {
   const now = new Date();
   const year = now.getFullYear();
@@ -12,33 +9,25 @@ function getTodayString() {
   return `${year}-${month}-${day}`;
 }
 
-/**
- * Validate reading payload
- */
 async function validateReadingInput({ userId, date, slot, value, readingId = null }) {
-  // 1. Value is required
   if (value === undefined || value === null || value === '') {
     return { valid: false, status: 400, message: 'Please enter a glucose value.' };
   }
 
-  // 2. Value must be a whole number between 40 and 600
   const numValue = Number(value);
   if (!Number.isInteger(numValue) || numValue < 40 || numValue > 600) {
     return { valid: false, status: 400, message: 'Value must be between 40 and 600 mg/dl.' };
   }
 
-  // 3. Date is required and valid
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     return { valid: false, status: 400, message: 'Please provide a valid date in YYYY-MM-DD format.' };
   }
 
-  // 4. Date cannot be in the future
   const today = getTodayString();
   if (date > today) {
     return { valid: false, status: 400, message: 'Date cannot be in the future.' };
   }
 
-  // 5. Slot is valid
   if (!slot || !SLOTS.includes(slot)) {
     return {
       valid: false,
@@ -47,7 +36,6 @@ async function validateReadingInput({ userId, date, slot, value, readingId = nul
     };
   }
 
-  // 6. Only one reading per slot per day
   let slotCheckQuery = 'SELECT id FROM readings WHERE user_id = $1 AND date = $2 AND slot = $3';
   const slotCheckParams = [userId, date, slot];
   if (readingId) {
@@ -64,7 +52,6 @@ async function validateReadingInput({ userId, date, slot, value, readingId = nul
     };
   }
 
-  // 7. Maximum 4 readings per day (for new readings or date change)
   if (!readingId) {
     const countCheck = await db.query(
       'SELECT COUNT(*) AS total FROM readings WHERE user_id = $1 AND date = $2',
@@ -78,9 +65,6 @@ async function validateReadingInput({ userId, date, slot, value, readingId = nul
   return { valid: true, sanitizedValue: numValue };
 }
 
-/**
- * Helper to normalize reading object date output
- */
 function formatReading(r) {
   if (!r) return r;
   let dateStr = r.date;
@@ -98,10 +82,6 @@ function formatReading(r) {
   };
 }
 
-/**
- * GET /api/readings
- * Supports optional ?date=YYYY-MM-DD, ?startDate=&endDate=, and ?page=1&limit=20 pagination
- */
 async function getReadings(req, res, next) {
   try {
     const userId = req.user.id;
@@ -121,16 +101,13 @@ async function getReadings(req, res, next) {
       paramIndex += 2;
     }
 
-    // Sort by date DESC, then slot
     queryText += ' ORDER BY date DESC, id DESC';
 
-    // Pagination bonus support
     if (page && limit) {
       const pageNum = Math.max(1, parseInt(page, 10) || 1);
       const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10) || 20));
       const offset = (pageNum - 1) * limitNum;
 
-      // Count total records
       const countRes = await db.query(
         `SELECT COUNT(*) FROM (${queryText}) AS filtered`,
         params
@@ -160,9 +137,6 @@ async function getReadings(req, res, next) {
   }
 }
 
-/**
- * GET /api/readings/:id
- */
 async function getReadingById(req, res, next) {
   try {
     const userId = req.user.id;
@@ -184,9 +158,6 @@ async function getReadingById(req, res, next) {
   }
 }
 
-/**
- * POST /api/readings
- */
 async function createReading(req, res, next) {
   try {
     const userId = req.user.id;
@@ -209,7 +180,6 @@ async function createReading(req, res, next) {
       reading: formatReading(result.rows[0])
     });
   } catch (err) {
-    // Catch compound unique violation error if any race condition occurs
     if (err.code === '23505') {
       return res.status(400).json({ error: formatSlotError(req.body.slot) });
     }
@@ -217,16 +187,12 @@ async function createReading(req, res, next) {
   }
 }
 
-/**
- * PUT /api/readings/:id
- */
 async function updateReading(req, res, next) {
   try {
     const userId = req.user.id;
     const { id } = req.params;
     const { date, slot, value } = req.body;
 
-    // Check existing
     const existing = await db.query(
       'SELECT id FROM readings WHERE id = $1 AND user_id = $2',
       [id, userId]
@@ -268,9 +234,6 @@ async function updateReading(req, res, next) {
   }
 }
 
-/**
- * DELETE /api/readings/:id
- */
 async function deleteReading(req, res, next) {
   try {
     const userId = req.user.id;

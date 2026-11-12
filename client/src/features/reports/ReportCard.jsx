@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, TrendingDown, Activity, Hash, AlertCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, AlertCircle } from 'lucide-react';
 
 export default function ReportCard({ title, subtitle, stats, icon: Icon, colorTheme = 'pink' }) {
   const { count, highest, lowest, average } = stats || { count: 0 };
@@ -27,7 +27,6 @@ export default function ReportCard({ title, subtitle, stats, icon: Icon, colorTh
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs flex flex-col justify-between">
-      {/* Card Header */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
@@ -44,7 +43,6 @@ export default function ReportCard({ title, subtitle, stats, icon: Icon, colorTh
           </span>
         </div>
 
-        {/* Stats or Friendly Empty State */}
         {count === 0 ? (
           <div className="mt-5 p-5 rounded-xl bg-slate-50 border border-slate-100 text-center">
             <AlertCircle className="w-5 h-5 mx-auto text-slate-400 mb-1.5" />
@@ -53,7 +51,6 @@ export default function ReportCard({ title, subtitle, stats, icon: Icon, colorTh
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-3 mt-5">
-            {/* Highest */}
             <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
               <div className="flex items-center gap-1 text-rose-500 text-xs font-semibold mb-1">
                 <TrendingUp className="w-3.5 h-3.5" />
@@ -65,7 +62,6 @@ export default function ReportCard({ title, subtitle, stats, icon: Icon, colorTh
               </div>
             </div>
 
-            {/* Lowest */}
             <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
               <div className="flex items-center gap-1 text-blue-500 text-xs font-semibold mb-1">
                 <TrendingDown className="w-3.5 h-3.5" />
@@ -77,7 +73,6 @@ export default function ReportCard({ title, subtitle, stats, icon: Icon, colorTh
               </div>
             </div>
 
-            {/* Average */}
             <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
               <div className="flex items-center gap-1 text-emerald-500 text-xs font-semibold mb-1">
                 <Activity className="w-3.5 h-3.5" />

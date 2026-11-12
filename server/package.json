@@ -36,8 +36,10 @@
   "jest": {
     "testEnvironment": "node",
     "testMatch": [
+      "**/src/features/**/*.test.js",
       "**/tests/**/*.test.js"
     ],
     "verbose": true
   }
 }
+

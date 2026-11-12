@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { apiRequest } from '../api/client';
+import { apiRequest } from '../../shared/api/client';
 
 const AuthContext = createContext(null);
 
@@ -8,7 +8,6 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem('sweety_token'));
   const [isLoading, setIsLoading] = useState(true);
 
-  // Verify stored token on boot
   useEffect(() => {
     async function loadUser() {
       if (!token) {

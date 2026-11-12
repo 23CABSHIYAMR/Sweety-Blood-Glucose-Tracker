@@ -1,13 +1,10 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const db = require('../db');
-const { JWT_SECRET } = require('../middleware/authMiddleware');
+const db = require('../../db');
+const { JWT_SECRET } = require('../../middleware/authMiddleware');
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/**
- * Generate JWT token for user
- */
 function generateToken(user) {
   return jwt.sign(
     { id: user.id, email: user.email, name: user.name },
@@ -16,14 +13,10 @@ function generateToken(user) {
   );
 }
 
-/**
- * Register a new user
- */
 async function register(req, res, next) {
   try {
     const { name, email, password } = req.body;
 
-    // Validations
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Name is required.' });
     }
@@ -38,7 +31,6 @@ async function register(req, res, next) {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Check if email already registered
     const existing = await db.query(
       'SELECT id FROM users WHERE LOWER(email) = LOWER($1)',
       [normalizedEmail]
@@ -48,11 +40,9 @@ async function register(req, res, next) {
       return res.status(409).json({ error: 'An account with this email already exists.' });
     }
 
-    // Hash password
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Insert user
     const result = await db.query(
       `INSERT INTO users (name, email, password_hash, created_at)
        VALUES ($1, $2, $3, NOW())
@@ -77,9 +67,6 @@ async function register(req, res, next) {
   }
 }
 
-/**
- * Log in an existing user
- */
 async function login(req, res, next) {
   try {
     const { email, password } = req.body;
@@ -90,7 +77,6 @@ async function login(req, res, next) {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    // Look up user
     const result = await db.query(
       'SELECT id, name, email, password_hash FROM users WHERE LOWER(email) = LOWER($1)',
       [normalizedEmail]
@@ -102,7 +88,6 @@ async function login(req, res, next) {
 
     const user = result.rows[0];
 
-    // Compare password
     const isValid = await bcrypt.compare(password, user.password_hash);
     if (!isValid) {
       return res.status(401).json({ error: 'Invalid email or password.' });
@@ -124,9 +109,6 @@ async function login(req, res, next) {
   }
 }
 
-/**
- * Get current user profile
- */
 async function getMe(req, res, next) {
   try {
     const result = await db.query(

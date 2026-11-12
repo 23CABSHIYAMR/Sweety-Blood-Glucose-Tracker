@@ -9,9 +9,9 @@ import {
   Tooltip,
   ReferenceLine
 } from 'recharts';
-import { TrendingUp, Info } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 
-function CustomTooltip({ active, payload, label }) {
+function CustomTooltip({ active, payload }) {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
@@ -41,7 +41,6 @@ export default function GlucoseTrendChart({ readings = [] }) {
     );
   }
 
-  // Sort readings chronologically for chart display
   const chartData = [...readings].sort((a, b) => new Date(a.date) - new Date(b.date));
 
   return (
@@ -91,7 +90,6 @@ export default function GlucoseTrendChart({ readings = [] }) {
               unit=" mg"
             />
             <Tooltip content={<CustomTooltip />} />
-            {/* Target guidelines */}
             <ReferenceLine y={70} stroke="#10b981" strokeDasharray="4 4" label={{ value: 'Low (70)', fill: '#10b981', fontSize: 10, position: 'right' }} />
             <ReferenceLine y={140} stroke="#10b981" strokeDasharray="4 4" label={{ value: 'Target (140)', fill: '#10b981', fontSize: 10, position: 'right' }} />
             <ReferenceLine y={180} stroke="#f59e0b" strokeDasharray="4 4" label={{ value: 'High (180)', fill: '#f59e0b', fontSize: 10, position: 'right' }} />

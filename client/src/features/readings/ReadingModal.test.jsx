@@ -1,9 +1,9 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import ReadingModal from '../components/ReadingModal';
+import ReadingModal from './ReadingModal';
 
-describe('ReadingModal Component', () => {
+describe('ReadingModal Component (Feature: Readings)', () => {
   it('renders form inputs when isOpen is true', () => {
     render(
       <ReadingModal

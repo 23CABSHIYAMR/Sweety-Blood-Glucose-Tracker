@@ -1,8 +1,5 @@
-const db = require('../db');
+const db = require('../../db');
 
-/**
- * Format Date to YYYY-MM-DD
- */
 function formatDate(d) {
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -10,27 +7,19 @@ function formatDate(d) {
   return `${year}-${month}-${day}`;
 }
 
-/**
- * Calculate report date ranges based on a selected date
- */
 function calculateRanges(selectedDateStr) {
   const [year, month, day] = selectedDateStr.split('-').map(Number);
 
-  // 1. Daily range
   const dailyDate = selectedDateStr;
-
-  // 2. Month-to-date range: 1st of month to selected date
   const mtdStartDate = `${year}-${String(month).padStart(2, '0')}-01`;
   const mtdEndDate = selectedDateStr;
 
-  // 3. Monthly range: Whole previous month
   let prevYear = year;
   let prevMonth = month - 1;
   if (prevMonth === 0) {
     prevMonth = 12;
     prevYear = year - 1;
   }
-  // Total days in previous month: day 0 of month gives last day of prev month
   const daysInPrevMonth = new Date(prevYear, prevMonth, 0).getDate();
   const prevMonthStartDate = `${prevYear}-${String(prevMonth).padStart(2, '0')}-01`;
   const prevMonthEndDate = `${prevYear}-${String(prevMonth).padStart(2, '0')}-${String(daysInPrevMonth).padStart(2, '0')}`;
@@ -42,9 +31,6 @@ function calculateRanges(selectedDateStr) {
   };
 }
 
-/**
- * Compute aggregate statistics for a given date range
- */
 async function getStatsForRange(userId, startDate, endDate) {
   const result = await db.query(
     `SELECT 
@@ -71,7 +57,6 @@ async function getStatsForRange(userId, startDate, endDate) {
 
   const highest = Number(row.highest);
   const lowest = Number(row.lowest);
-  // Round average to 1 decimal place
   const avgNum = Number(row.average);
   const average = Math.round(avgNum * 10) / 10;
 
@@ -83,9 +68,6 @@ async function getStatsForRange(userId, startDate, endDate) {
   };
 }
 
-/**
- * GET /api/reports?date=YYYY-MM-DD
- */
 async function getReports(req, res, next) {
   try {
     const userId = req.user.id;
@@ -101,7 +83,6 @@ async function getReports(req, res, next) {
 
     const ranges = calculateRanges(selectedDate);
 
-    // 1. Daily Report & readings
     const [dailyStats, dailyReadingsRes, mtdStats, monthlyStats] = await Promise.all([
       getStatsForRange(userId, ranges.daily.date, ranges.daily.date),
       db.query(

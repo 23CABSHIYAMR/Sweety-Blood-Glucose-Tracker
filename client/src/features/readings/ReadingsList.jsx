@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, Calendar, Filter, ChevronLeft, ChevronRight, AlertCircle, Droplet } from 'lucide-react';
+import { Plus, Edit2, Trash2, Calendar, ChevronLeft, ChevronRight, Droplet } from 'lucide-react';
 
 const SLOT_BADGES = {
   'Morning (fasting)': {
@@ -43,7 +43,6 @@ export default function ReadingsList({
 
   return (
     <div className="space-y-6">
-      {/* Top Action Bar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
         <div>
           <h2 className="text-lg font-bold text-slate-900 tracking-tight">Blood Glucose Logs</h2>
@@ -51,7 +50,6 @@ export default function ReadingsList({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {/* Date Filter */}
           <div className="relative flex items-center">
             <Calendar className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
             <input
@@ -71,7 +69,6 @@ export default function ReadingsList({
             )}
           </div>
 
-          {/* Add Reading Button */}
           <button
             onClick={onAddClick}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-pink-600 hover:bg-pink-700 text-white text-xs font-semibold shadow-xs shadow-pink-200 transition"
@@ -82,7 +79,6 @@ export default function ReadingsList({
         </div>
       </div>
 
-      {/* Content Table / Cards */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         {isLoading ? (
           <div className="p-12 text-center text-slate-400 text-sm">
@@ -90,7 +86,6 @@ export default function ReadingsList({
             <p>Loading glucose logs...</p>
           </div>
         ) : readings.length === 0 ? (
-          /* Empty State */
           <div className="p-12 text-center">
             <div className="w-14 h-14 mx-auto rounded-2xl bg-pink-50 text-pink-500 flex items-center justify-center mb-3">
               <Droplet className="w-7 h-7" />
@@ -131,12 +126,10 @@ export default function ReadingsList({
 
                   return (
                     <tr key={reading.id} className="hover:bg-slate-50/50 transition">
-                      {/* Date */}
                       <td className="py-3.5 px-6 font-medium text-slate-900 whitespace-nowrap">
                         {reading.date}
                       </td>
 
-                      {/* Slot */}
                       <td className="py-3.5 px-6 whitespace-nowrap">
                         <span
                           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border ${slotConfig.bg}`}
@@ -146,7 +139,6 @@ export default function ReadingsList({
                         </span>
                       </td>
 
-                      {/* Value */}
                       <td className="py-3.5 px-6 whitespace-nowrap">
                         <span className="text-base font-bold text-slate-900 tracking-tight">
                           {reading.value}
@@ -154,14 +146,12 @@ export default function ReadingsList({
                         <span className="text-xs text-slate-400 ml-1">mg/dl</span>
                       </td>
 
-                      {/* Status */}
                       <td className="py-3.5 px-6 whitespace-nowrap">
                         <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${statusConfig.class}`}>
                           {statusConfig.label}
                         </span>
                       </td>
 
-                      {/* Actions */}
                       <td className="py-3.5 px-6 text-right whitespace-nowrap">
                         {isDeleting ? (
                           <div className="inline-flex items-center gap-2">
@@ -209,7 +199,6 @@ export default function ReadingsList({
           </div>
         )}
 
-        {/* Pagination Footer */}
         {pagination && pagination.totalPages > 1 && (
           <div className="flex items-center justify-between px-6 py-3.5 border-t border-slate-100 bg-slate-50/50">
             <span className="text-xs text-slate-500">

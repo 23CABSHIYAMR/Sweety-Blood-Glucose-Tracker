@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from './AuthContext';
 import { Activity, AlertCircle, ArrowRight, Lock, Mail } from 'lucide-react';
 
 export default function LoginPage({ onSwitchToRegister }) {
@@ -40,7 +40,6 @@ export default function LoginPage({ onSwitchToRegister }) {
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-400 items-center justify-center text-white shadow-lg shadow-pink-200 mb-4">
             <Activity className="w-7 h-7" />
@@ -49,7 +48,6 @@ export default function LoginPage({ onSwitchToRegister }) {
           <p className="text-sm text-slate-500 mt-1">Sign in to track your blood glucose readings</p>
         </div>
 
-        {/* Card */}
         <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
           {error && (
             <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-sm flex items-start gap-3">
@@ -105,7 +103,6 @@ export default function LoginPage({ onSwitchToRegister }) {
             </button>
           </form>
 
-          {/* Quick Demo Autofill */}
           <div className="mt-6 pt-5 border-t border-slate-100">
             <button
               type="button"
@@ -117,7 +114,6 @@ export default function LoginPage({ onSwitchToRegister }) {
           </div>
         </div>
 
-        {/* Switch to Register */}
         <p className="text-center text-sm text-slate-500 mt-6">
           Don't have an account?{' '}
           <button

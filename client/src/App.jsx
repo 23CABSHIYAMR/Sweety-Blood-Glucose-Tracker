@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { apiRequest } from './api/client';
-import Navbar from './components/Navbar';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import ReadingsList from './components/ReadingsList';
-import ReadingModal from './components/ReadingModal';
-import ReportsView from './components/ReportsView';
+import { AuthProvider, useAuth } from './features/auth/AuthContext';
+import { apiRequest } from './shared/api/client';
+import Navbar from './shared/components/Navbar';
+import LoginPage from './features/auth/LoginPage';
+import RegisterPage from './features/auth/RegisterPage';
+import ReadingsList from './features/readings/ReadingsList';
+import ReadingModal from './features/readings/ReadingModal';
+import ReportsView from './features/reports/ReportsView';
 import { Activity } from 'lucide-react';
 
-function Dashboard({ activeTab, onTabChange }) {
+function Dashboard({ activeTab }) {
   const [readings, setReadings] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -43,13 +43,11 @@ function Dashboard({ activeTab, onTabChange }) {
 
   const handleSaveReading = async (readingData) => {
     if (readingData.id) {
-      // Update
       await apiRequest(`/readings/${readingData.id}`, {
         method: 'PUT',
         body: JSON.stringify(readingData)
       });
     } else {
-      // Create
       await apiRequest('/readings', {
         method: 'POST',
         body: JSON.stringify(readingData)
@@ -97,7 +95,6 @@ function Dashboard({ activeTab, onTabChange }) {
         <ReportsView />
       )}
 
-      {/* Add / Edit Reading Modal */}
       <ReadingModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -114,8 +111,8 @@ function Dashboard({ activeTab, onTabChange }) {
 
 function MainApp() {
   const { user, isLoading } = useAuth();
-  const [authView, setAuthView] = useState('login'); // 'login' | 'register'
-  const [activeTab, setActiveTab] = useState('readings'); // 'readings' | 'reports'
+  const [authView, setAuthView] = useState('login');
+  const [activeTab, setActiveTab] = useState('readings');
 
   if (isLoading) {
     return (

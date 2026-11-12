@@ -2,9 +2,10 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-const authRoutes = require('./routes/authRoutes');
-const readingRoutes = require('./routes/readingRoutes');
-const reportRoutes = require('./routes/reportRoutes');
+// Vertical Slice Routes
+const authRoutes = require('./features/auth/authRoutes');
+const readingRoutes = require('./features/readings/readingRoutes');
+const reportRoutes = require('./features/reports/reportRoutes');
 
 const app = express();
 
@@ -15,7 +16,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-// Routes
+// Routes mounted per domain feature
 app.use('/api/auth', authRoutes);
 app.use('/api/readings', readingRoutes);
 app.use('/api/reports', reportRoutes);

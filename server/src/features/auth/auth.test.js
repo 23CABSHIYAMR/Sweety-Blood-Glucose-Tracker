@@ -1,15 +1,15 @@
 const request = require('supertest');
-const app = require('../src/app');
-const db = require('../src/db');
+const app = require('../../app');
+const db = require('../../db');
 
 beforeAll(async () => {
   await db.initDb();
 });
 
-describe('Authentication API', () => {
+describe('Authentication API (Feature: Auth)', () => {
   const testUser = {
     name: 'Jane Doe',
-    email: 'jane@example.com',
+    email: 'jane_slice@example.com',
     password: 'Password123!'
   };
 
@@ -40,7 +40,7 @@ describe('Authentication API', () => {
       .post('/api/auth/register')
       .send({
         name: 'Short Pass',
-        email: 'short@example.com',
+        email: 'short_slice@example.com',
         password: '123'
       });
 

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { apiRequest } from '../api/client';
+import { apiRequest } from '../../shared/api/client';
 import ReportCard from './ReportCard';
 import GlucoseTrendChart from './GlucoseTrendChart';
-import { Calendar, BarChart2, CalendarDays, History, Droplet, Clock } from 'lucide-react';
+import { Calendar, BarChart2, CalendarDays, History, Clock } from 'lucide-react';
 
 const SLOT_BADGES = {
   'Morning (fasting)': 'bg-amber-50 text-amber-700 border-amber-200',
@@ -56,7 +56,6 @@ export default function ReportsView() {
         const data = await apiRequest(`/reports?date=${selectedDate}`);
         setReportData(data);
 
-        // Fetch readings for trend chart in MTD window
         if (data.mtd?.startDate && data.mtd?.endDate) {
           const readingsRes = await apiRequest(
             `/readings?startDate=${data.mtd.startDate}&endDate=${data.mtd.endDate}`
@@ -77,7 +76,6 @@ export default function ReportsView() {
 
   return (
     <div className="space-y-6">
-      {/* Date Selector Header */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-slate-900 tracking-tight">Clinical Reports</h2>
@@ -113,9 +111,7 @@ export default function ReportsView() {
         </div>
       ) : reportData ? (
         <div className="space-y-6">
-          {/* 3 Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Daily Report */}
             <ReportCard
               title="Daily Report"
               subtitle={formatDisplayDate(reportData.daily.date)}
@@ -124,7 +120,6 @@ export default function ReportsView() {
               colorTheme="pink"
             />
 
-            {/* Month-to-Date */}
             <ReportCard
               title="Month-to-Date"
               subtitle={formatRangeDisplay(reportData.mtd.startDate, reportData.mtd.endDate)}
@@ -133,7 +128,6 @@ export default function ReportsView() {
               colorTheme="blue"
             />
 
-            {/* Monthly (Previous Month) */}
             <ReportCard
               title="Monthly (Previous Month)"
               subtitle={formatRangeDisplay(reportData.monthly.startDate, reportData.monthly.endDate)}
@@ -143,10 +137,8 @@ export default function ReportsView() {
             />
           </div>
 
-          {/* Bonus: Glucose Trend Line Chart */}
           <GlucoseTrendChart readings={trendReadings} />
 
-          {/* Daily Slot Breakdown Table */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <div>

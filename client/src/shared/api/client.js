@@ -1,6 +1,3 @@
-/**
- * API client helper with auth header injection and standardized error parsing
- */
 const API_BASE = '/api';
 
 export async function apiRequest(endpoint, options = {}) {

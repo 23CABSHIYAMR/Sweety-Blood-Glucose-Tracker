@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const readingController = require('../controllers/readingController');
-const { authenticateToken } = require('../middleware/authMiddleware');
+const readingController = require('./readingController');
+const { authenticateToken } = require('../../middleware/authMiddleware');
 
-// All reading routes require authentication
 router.use(authenticateToken);
 
 router.get('/', readingController.getReadings);
