@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../features/auth/AuthContext';
 import ThemeToggle from './ThemeToggle';
+import LogoutConfirmModal from './LogoutConfirmModal';
 import { Activity, LogOut, User, BarChart2, Calendar, ChevronDown } from 'lucide-react';
 
-function UserMenu({ user, onLogout }) {
+function UserMenu({ user, onLogoutRequest }) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -77,7 +78,7 @@ function UserMenu({ user, onLogout }) {
               type="button"
               onClick={() => {
                 setIsOpen(false);
-                onLogout();
+                onLogoutRequest();
               }}
               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors text-left"
               aria-label="Log out"
@@ -94,6 +95,12 @@ function UserMenu({ user, onLogout }) {
 
 export default function Navbar({ activeTab, onTabChange }) {
   const { user, logout } = useAuth();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
+  const handleConfirmLogout = () => {
+    setIsLogoutModalOpen(false);
+    logout();
+  };
 
   return (
     <>
@@ -148,13 +155,20 @@ export default function Navbar({ activeTab, onTabChange }) {
             <ThemeToggle />
 
             {user ? (
-              <UserMenu user={user} onLogout={logout} />
+              <UserMenu user={user} onLogoutRequest={() => setIsLogoutModalOpen(true)} />
             ) : (
               <div className="text-xs text-slate-400 dark:text-slate-500">Not logged in</div>
             )}
           </div>
         </div>
       </header>
+
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={handleConfirmLogout}
+      />
 
       {/* Mobile Bottom Navigation Bar (Fixed for thumb-friendly navigation on mobile) */}
       {user && (
