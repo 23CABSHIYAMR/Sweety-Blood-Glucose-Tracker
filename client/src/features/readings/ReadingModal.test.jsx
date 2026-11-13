@@ -138,5 +138,30 @@ describe('ReadingModal Component (Feature: Readings)', () => {
 
     expect(handleSave).not.toHaveBeenCalled();
   });
+
+  it('displays error and rejects submission when date is cleared or empty', async () => {
+    const handleSave = vi.fn();
+
+    render(
+      <ReadingModal
+        isOpen={true}
+        onClose={vi.fn()}
+        onSave={handleSave}
+      />
+    );
+
+    const dateInput = screen.getByLabelText(/date/i);
+    fireEvent.change(dateInput, { target: { value: '' } });
+
+    expect(screen.getByText('Please enter a date.')).toBeInTheDocument();
+
+    const valInput = screen.getByLabelText(/glucose value/i);
+    fireEvent.change(valInput, { target: { value: '110' } });
+
+    const submitBtn = screen.getByRole('button', { name: /save reading/i });
+    fireEvent.click(submitBtn);
+
+    expect(handleSave).not.toHaveBeenCalled();
+  });
 });
 

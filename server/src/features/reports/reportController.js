@@ -1,4 +1,5 @@
 const db = require('../../db');
+const { parseAndValidateDate } = require('../../utils/dateValidator');
 
 function formatDate(d) {
   const year = d.getFullYear();
@@ -77,14 +78,12 @@ async function getReports(req, res, next) {
       selectedDate = formatDate(new Date());
     }
 
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)) {
-      return res.status(400).json({ error: 'Please provide a valid date in YYYY-MM-DD format.' });
+    const dateCheck = parseAndValidateDate(selectedDate);
+    if (!dateCheck.valid) {
+      return res.status(400).json({ error: dateCheck.error });
     }
 
-    const today = formatDate(new Date());
-    if (selectedDate > today) {
-      return res.status(400).json({ error: 'Date cannot be in the future.' });
-    }
+    selectedDate = dateCheck.isoDate;
 
     const ranges = calculateRanges(selectedDate);
 

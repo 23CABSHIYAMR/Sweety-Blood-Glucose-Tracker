@@ -1,13 +1,6 @@
 const db = require('../../db');
 const { SLOTS, formatSlotError } = require('../../utils/constants');
-
-function getTodayString() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
+const { parseAndValidateDate, getTodayString } = require('../../utils/dateValidator');
 
 async function validateReadingInput({ userId, date, slot, value, readingId = null }) {
   if (value === undefined || value === null || value === '') {
@@ -19,14 +12,12 @@ async function validateReadingInput({ userId, date, slot, value, readingId = nul
     return { valid: false, status: 400, message: 'Value must be between 40 and 600 mg/dl.' };
   }
 
-  if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return { valid: false, status: 400, message: 'Please provide a valid date in YYYY-MM-DD format.' };
+  const dateCheck = parseAndValidateDate(date);
+  if (!dateCheck.valid) {
+    return { valid: false, status: 400, message: dateCheck.error };
   }
 
-  const today = getTodayString();
-  if (date > today) {
-    return { valid: false, status: 400, message: 'Date cannot be in the future.' };
-  }
+  const normalizedDate = dateCheck.isoDate;
 
   if (!slot || !SLOTS.includes(slot)) {
     return {
@@ -37,7 +28,7 @@ async function validateReadingInput({ userId, date, slot, value, readingId = nul
   }
 
   let slotCheckQuery = 'SELECT id FROM readings WHERE user_id = $1 AND date = $2 AND slot = $3';
-  const slotCheckParams = [userId, date, slot];
+  const slotCheckParams = [userId, normalizedDate, slot];
   if (readingId) {
     slotCheckQuery += ' AND id != $4';
     slotCheckParams.push(readingId);
@@ -55,14 +46,14 @@ async function validateReadingInput({ userId, date, slot, value, readingId = nul
   if (!readingId) {
     const countCheck = await db.query(
       'SELECT COUNT(*) AS total FROM readings WHERE user_id = $1 AND date = $2',
-      [userId, date]
+      [userId, normalizedDate]
     );
     if (parseInt(countCheck.rows[0].total, 10) >= 4) {
       return { valid: false, status: 400, message: 'You can add only 4 readings per day.' };
     }
   }
 
-  return { valid: true, sanitizedValue: numValue };
+  return { valid: true, sanitizedValue: numValue, sanitizedDate: normalizedDate };
 }
 
 function formatReading(r) {
@@ -92,12 +83,24 @@ async function getReadings(req, res, next) {
     let paramIndex = 2;
 
     if (date) {
+      const dateCheck = parseAndValidateDate(date);
+      if (!dateCheck.valid) {
+        return res.status(400).json({ error: dateCheck.error });
+      }
       queryText += ` AND date = $${paramIndex}`;
-      params.push(date);
+      params.push(dateCheck.isoDate);
       paramIndex++;
     } else if (startDate && endDate) {
+      const startCheck = parseAndValidateDate(startDate);
+      const endCheck = parseAndValidateDate(endDate);
+      if (!startCheck.valid) {
+        return res.status(400).json({ error: startCheck.error });
+      }
+      if (!endCheck.valid) {
+        return res.status(400).json({ error: endCheck.error });
+      }
       queryText += ` AND date BETWEEN $${paramIndex} AND $${paramIndex + 1}`;
-      params.push(startDate, endDate);
+      params.push(startCheck.isoDate, endCheck.isoDate);
       paramIndex += 2;
     }
 
@@ -172,7 +175,7 @@ async function createReading(req, res, next) {
       `INSERT INTO readings (user_id, date, slot, value, created_at, updated_at)
        VALUES ($1, $2, $3, $4, NOW(), NOW())
        RETURNING id, user_id, date, slot, value, created_at, updated_at`,
-      [userId, date, slot, validation.sanitizedValue]
+      [userId, validation.sanitizedDate, slot, validation.sanitizedValue]
     );
 
     res.status(201).json({
@@ -219,7 +222,7 @@ async function updateReading(req, res, next) {
        SET date = $1, slot = $2, value = $3, updated_at = NOW()
        WHERE id = $4 AND user_id = $5
        RETURNING id, user_id, date, slot, value, created_at, updated_at`,
-      [date, slot, validation.sanitizedValue, id, userId]
+      [validation.sanitizedDate, slot, validation.sanitizedValue, id, userId]
     );
 
     res.json({

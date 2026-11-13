@@ -60,3 +60,4 @@ export default function LogoutConfirmModal({ isOpen, onClose, onConfirm, isLoggi
     </div>
   );
 }
+

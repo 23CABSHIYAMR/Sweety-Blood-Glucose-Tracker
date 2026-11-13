@@ -77,7 +77,7 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
     try {
       await onSave({
         id: readingToEdit?.id,
-        date,
+        date: dateCheck.isoDate || date,
         slot,
         value: numValue
       });

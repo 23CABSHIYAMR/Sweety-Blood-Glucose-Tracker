@@ -103,6 +103,34 @@ describe('Readings CRUD & Validation API (Feature: Readings)', () => {
     expect(res.body.error).toBe('Date cannot be in the future.');
   });
 
+  test('POST /api/readings - validation: Rejects impossible calendar date 30-02-2022', async () => {
+    const res = await request(app)
+      .post('/api/readings')
+      .set('Authorization', `Bearer ${tokenUser1}`)
+      .send({
+        date: '30-02-2022',
+        slot: 'After lunch',
+        value: 120
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/February 2022 only has 28 days/i);
+  });
+
+  test('POST /api/readings - validation: Rejects impossible calendar date 45-12-2025', async () => {
+    const res = await request(app)
+      .post('/api/readings')
+      .set('Authorization', `Bearer ${tokenUser1}`)
+      .send({
+        date: '45-12-2025',
+        slot: 'After lunch',
+        value: 120
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/December only has 31 days/i);
+  });
+
   test('POST /api/readings - validation: Only one reading per slot per day', async () => {
     const res = await request(app)
       .post('/api/readings')

@@ -1,8 +1,12 @@
+require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
-const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'sweety_jwt_secret_token_change_in_production_123456';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || `${JWT_ACCESS_SECRET}_refresh_key`;
+const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET;
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || (process.env.JWT_SECRET ? `${process.env.JWT_SECRET}_refresh` : undefined);
 
+if (!JWT_ACCESS_SECRET || !JWT_REFRESH_SECRET) {
+  throw new Error('JWT secrets are not configured in environment variables. Please define JWT_ACCESS_SECRET and JWT_REFRESH_SECRET in your .env file.');
+}
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const headerToken = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
