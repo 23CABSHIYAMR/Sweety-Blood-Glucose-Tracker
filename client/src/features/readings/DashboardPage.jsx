@@ -11,7 +11,6 @@ export default function DashboardPage() {
   const [readings, setReadings] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit, setLimit] = useState(15); // Default pagination limit (customizable: 10, 15, 20, 50)
   const [dateFilter, setDateFilter] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -27,7 +26,7 @@ export default function DashboardPage() {
   const fetchReadings = useCallback(async () => {
     setIsLoading(true);
     try {
-      let endpoint = `/readings?page=${currentPage}&limit=${limit}`;
+      let endpoint = `/readings?page=${currentPage}&limit=15`;
       if (dateFilter) {
         endpoint += `&date=${dateFilter}`;
       }
@@ -40,7 +39,7 @@ export default function DashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, limit, dateFilter, showToast]);
+  }, [currentPage, dateFilter, showToast]);
 
   useEffect(() => {
     fetchReadings();
@@ -52,11 +51,6 @@ export default function DashboardPage() {
       return;
     }
     setDateFilter(val);
-    setCurrentPage(1);
-  };
-
-  const handleLimitChange = (newLimit) => {
-    setLimit(newLimit);
     setCurrentPage(1);
   };
 
@@ -107,8 +101,6 @@ export default function DashboardPage() {
         pagination={pagination}
         currentPage={currentPage}
         onPageChange={setCurrentPage}
-        limit={limit}
-        onLimitChange={handleLimitChange}
         dateFilter={dateFilter}
         onDateFilterChange={handleDateFilterChange}
         onAddClick={() => {

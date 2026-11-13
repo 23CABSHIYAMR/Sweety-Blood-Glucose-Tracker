@@ -312,7 +312,7 @@ export default function ReadingsList({
         )}
 
         {/* Pagination Footer */}
-        {pagination && (
+        {pagination && readings.length!==0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
             <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
               <span>
