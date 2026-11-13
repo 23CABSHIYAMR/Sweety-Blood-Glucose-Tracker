@@ -15,6 +15,7 @@ export default function DashboardPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [dateFilter, setDateFilter] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   // Add / Edit Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -40,6 +41,7 @@ export default function DashboardPage() {
       showToast(err.message || 'Failed to load readings.', 'error');
     } finally {
       setIsLoading(false);
+      setHasLoadedOnce(true);
     }
   }, [currentPage, dateFilter, showToast]);
 
@@ -119,6 +121,7 @@ export default function DashboardPage() {
         }}
         onDeleteClick={handleOpenDeleteModal}
         isLoading={isLoading}
+        hasLoadedOnce={hasLoadedOnce}
       />
 
       {/* Add / Edit Reading Modal */}

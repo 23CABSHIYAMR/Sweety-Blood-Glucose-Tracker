@@ -40,13 +40,48 @@ export function validateDateInput(dateStr) {
   return { valid: true };
 }
 
-export function formatDisplayDate(dateStr) {
+/**
+ * Consistently format date strings across the application to DD/MM/YYYY
+ * e.g. "2026-10-15" -> "15/10/2026"
+ */
+export function formatDDMMYYYY(dateStr) {
   if (!dateStr) return '';
-  const [year, month, day] = dateStr.split('-');
-  const dateObj = new Date(year, month - 1, day);
-  return dateObj.toLocaleDateString('en-US', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  });
+  if (typeof dateStr !== 'string') {
+    if (dateStr instanceof Date) {
+      const year = dateStr.getFullYear();
+      const month = String(dateStr.getMonth() + 1).padStart(2, '0');
+      const day = String(dateStr.getDate()).padStart(2, '0');
+      return `${day}/${month}/${year}`;
+    }
+    return '';
+  }
+
+  // Already in DD/MM/YYYY
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr.trim())) {
+    return dateStr.trim();
+  }
+
+  const clean = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr.trim();
+  const parts = clean.split('-');
+  if (parts.length === 3) {
+    const [year, month, day] = parts;
+    return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+  }
+
+  return dateStr;
+}
+
+/**
+ * Format date range as "DD/MM/YYYY – DD/MM/YYYY"
+ */
+export function formatRangeDDMMYYYY(startDate, endDate) {
+  if (!startDate || !endDate) return '';
+  return `${formatDDMMYYYY(startDate)} – ${formatDDMMYYYY(endDate)}`;
+}
+
+/**
+ * Alias for formatDDMMYYYY for backward-compatible call-sites
+ */
+export function formatDisplayDate(dateStr) {
+  return formatDDMMYYYY(dateStr);
 }

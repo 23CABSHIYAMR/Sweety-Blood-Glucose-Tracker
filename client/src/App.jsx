@@ -57,7 +57,7 @@ function AppRouter() {
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
       <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <main className="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 pb-20 sm:pb-8">
+      <main className="flex-1 max-w-[1400px] w-full mx-auto px-4 sm:px-6 lg:px-10 py-4 sm:py-8 pb-20 sm:pb-8">
         {activeTab === 'readings' ? (
           <DashboardPage />
         ) : (

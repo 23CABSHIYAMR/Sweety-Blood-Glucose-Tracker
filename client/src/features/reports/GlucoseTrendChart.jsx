@@ -11,13 +11,14 @@ import {
 } from 'recharts';
 import { TrendingUp, Calendar } from 'lucide-react';
 import { useTheme } from '../../shared/context/ThemeContext';
+import { formatDDMMYYYY } from '../../shared/utils/date';
 
 function CustomTooltip({ active, payload }) {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
       <div className="bg-slate-900/95 dark:bg-slate-800/95 text-white p-2.5 sm:p-3 rounded-xl shadow-xl border border-slate-800 dark:border-slate-700 text-xs backdrop-blur-md">
-        <div className="font-semibold text-pink-300 dark:text-pink-400 mb-1">{data.date}</div>
+        <div className="font-semibold text-pink-300 dark:text-pink-400 mb-1">{formatDDMMYYYY(data.date)}</div>
         <div className="text-slate-300">
           Slot: <span className="font-medium text-white">{data.slot}</span>
         </div>
@@ -123,8 +124,12 @@ export default function GlucoseTrendChart({
                 fontSize={10}
                 tickLine={false}
                 tickFormatter={(d) => {
+                  if (!d) return '';
                   const parts = d.split('-');
-                  return `${parts[1]}/${parts[2]}`;
+                  if (parts.length === 3) {
+                    return `${parts[2]}/${parts[1]}`; // DD/MM format
+                  }
+                  return d;
                 }}
               />
               <YAxis

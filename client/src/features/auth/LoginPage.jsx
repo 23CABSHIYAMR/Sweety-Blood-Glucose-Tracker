@@ -52,12 +52,15 @@ export default function LoginPage({ onSwitchToRegister }) {
         </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-slate-950/50 transition-colors duration-200">
-          {error && (
-            <div className="mb-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-sm flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5 text-rose-500 dark:text-rose-400" />
-              <span>{error}</span>
-            </div>
-          )}
+          {/* Reserved Space Error Box to Prevent Page Shifts */}
+          <div className="min-h-[54px] mb-4 flex items-center">
+            {error ? (
+              <div className="w-full p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-xs sm:text-sm flex items-start gap-2.5 animate-in fade-in duration-150">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-500 dark:text-rose-400" />
+                <span className="font-medium leading-tight">{error}</span>
+              </div>
+            ) : null}
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Plus, Edit2, Trash2, Calendar, ChevronLeft, ChevronRight, Droplet, Sunrise, Sun, Utensils, Moon } from 'lucide-react';
-import { getTodayString, validateDateInput } from '../../shared/utils/date';
+import { getTodayString, validateDateInput, formatDDMMYYYY } from '../../shared/utils/date';
 
 export const SLOT_CONFIG = {
   'Morning (fasting)': {
@@ -43,9 +43,11 @@ export default function ReadingsList({
   onAddClick,
   onEditClick,
   onDeleteClick,
-  isLoading
+  isLoading,
+  hasLoadedOnce = false
 }) {
   const today = getTodayString();
+  const showSkeleton = isLoading && (!hasLoadedOnce || readings.length > 0);
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -99,8 +101,8 @@ export default function ReadingsList({
       </div>
 
       {/* Content Container */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden transition-colors duration-200">
-        {isLoading ? (
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden transition-colors duration-200 flex flex-col">
+        {showSkeleton ? (
           /* SKELETON LOADER FOR DASHBOARD TABLE & MOBILE CARDS */
           <>
             {/* Mobile Skeleton Cards */}
@@ -123,34 +125,34 @@ export default function ReadingsList({
               ))}
             </div>
 
-            {/* Desktop / Tablet Skeleton Table */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50/75 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+            {/* Desktop / Tablet Skeleton Table (Exact same columns, sticky header & fixed height) */}
+            <div className="hidden sm:block overflow-x-auto overflow-y-auto max-h-[calc(100vh-320px)] min-h-[420px] relative">
+              <table className="w-full text-left text-sm border-collapse table-fixed">
+                <thead className="sticky top-0 z-10 bg-slate-50/95 dark:bg-slate-800/95 backdrop-blur-xs border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider shadow-xs">
                   <tr>
-                    <th className="py-3.5 px-6">Date</th>
-                    <th className="py-3.5 px-6">Slot</th>
-                    <th className="py-3.5 px-6">Value (mg/dl)</th>
-                    <th className="py-3.5 px-6">Status</th>
-                    <th className="py-3.5 px-6 text-right">Actions</th>
+                    <th className="py-3.5 px-6 w-[20%]">Date</th>
+                    <th className="py-3.5 px-6 w-[28%]">Slot</th>
+                    <th className="py-3.5 px-6 w-[20%]">Value (mg/dl)</th>
+                    <th className="py-3.5 px-6 w-[18%]">Status</th>
+                    <th className="py-3.5 px-6 w-[14%] text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
                   {[...Array(15)].map((_, n) => (
                     <tr key={n} className="animate-pulse">
-                      <td className="py-4 px-6">
+                      <td className="py-3.5 px-6 w-[20%]">
                         <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded"></div>
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-3.5 px-6 w-[28%]">
                         <div className="h-6 w-32 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-3.5 px-6 w-[20%]">
                         <div className="h-5 w-16 bg-slate-200 dark:bg-slate-800 rounded"></div>
                       </td>
-                      <td className="py-4 px-6">
+                      <td className="py-3.5 px-6 w-[18%]">
                         <div className="h-5 w-16 bg-slate-200 dark:bg-slate-800 rounded-md"></div>
                       </td>
-                      <td className="py-4 px-6 text-right">
+                      <td className="py-3.5 px-6 w-[14%] text-right">
                         <div className="inline-flex items-center gap-1.5 justify-end">
                           <div className="h-7 w-7 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
                           <div className="h-7 w-7 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
@@ -170,7 +172,7 @@ export default function ReadingsList({
             <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">No readings found</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1 mb-5">
               {dateFilter
-                ? `No readings recorded for ${dateFilter}. Record a reading or clear the date filter.`
+                ? `No readings recorded for ${formatDDMMYYYY(dateFilter)}. Record a reading or clear the date filter.`
                 : 'You have not recorded any glucose readings yet. Start tracking your levels today!'}
             </p>
             <button
@@ -214,7 +216,7 @@ export default function ReadingsList({
                         <span className="text-xs text-slate-400 dark:text-slate-500 ml-1">mg/dl</span>
                       </div>
                       <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                        {reading.date}
+                        {formatDDMMYYYY(reading.date)}
                       </div>
                     </div>
 
@@ -239,16 +241,16 @@ export default function ReadingsList({
               })}
             </div>
 
-            {/* DESKTOP/TABLET VIEW: Structured Table */}
-            <div className="hidden sm:block overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50/75 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+            {/* DESKTOP/TABLET VIEW: Structured Table with Sticky Header & Scrollable Body */}
+            <div className="hidden sm:block overflow-x-auto overflow-y-auto max-h-[calc(100vh-320px)] min-h-[420px] relative">
+              <table className="w-full text-left text-sm border-collapse table-fixed">
+                <thead className="sticky top-0 z-10 bg-slate-50/95 dark:bg-slate-800/95 backdrop-blur-xs border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider shadow-xs">
                   <tr>
-                    <th className="py-3.5 px-6">Date</th>
-                    <th className="py-3.5 px-6">Slot</th>
-                    <th className="py-3.5 px-6">Value (mg/dl)</th>
-                    <th className="py-3.5 px-6">Status</th>
-                    <th className="py-3.5 px-6 text-right">Actions</th>
+                    <th className="py-3.5 px-6 w-[20%]">Date</th>
+                    <th className="py-3.5 px-6 w-[28%]">Slot</th>
+                    <th className="py-3.5 px-6 w-[20%]">Value (mg/dl)</th>
+                    <th className="py-3.5 px-6 w-[18%]">Status</th>
+                    <th className="py-3.5 px-6 w-[14%] text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
@@ -261,11 +263,11 @@ export default function ReadingsList({
 
                     return (
                       <tr key={reading.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
-                        <td className="py-3.5 px-6 font-medium text-slate-900 dark:text-slate-100 whitespace-nowrap">
-                          {reading.date}
+                        <td className="py-3.5 px-6 w-[20%] font-medium text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                          {formatDDMMYYYY(reading.date)}
                         </td>
 
-                        <td className="py-3.5 px-6 whitespace-nowrap">
+                        <td className="py-3.5 px-6 w-[28%] whitespace-nowrap">
                           <span
                             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border ${slotConfig.bg}`}
                           >
@@ -274,20 +276,20 @@ export default function ReadingsList({
                           </span>
                         </td>
 
-                        <td className="py-3.5 px-6 whitespace-nowrap">
+                        <td className="py-3.5 px-6 w-[20%] whitespace-nowrap">
                           <span className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
                             {reading.value}
                           </span>
                           <span className="text-xs text-slate-400 dark:text-slate-500 ml-1">mg/dl</span>
                         </td>
 
-                        <td className="py-3.5 px-6 whitespace-nowrap">
+                        <td className="py-3.5 px-6 w-[18%] whitespace-nowrap">
                           <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${statusConfig.class}`}>
                             {statusConfig.label}
                           </span>
                         </td>
 
-                        <td className="py-3.5 px-6 text-right whitespace-nowrap">
+                        <td className="py-3.5 px-6 w-[14%] text-right whitespace-nowrap">
                           <div className="inline-flex items-center gap-1">
                             <button
                               onClick={() => onEditClick(reading)}
@@ -314,7 +316,7 @@ export default function ReadingsList({
           </>
         )}
 
-        {/* Pagination Footer */}
+        {/* Pagination Footer - Fixed at bottom outside scrollable table body */}
         {pagination && readings.length !== 0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">

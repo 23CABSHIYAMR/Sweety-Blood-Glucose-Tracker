@@ -1,34 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiRequest } from '../../shared/api/client';
 import { useToast } from '../../shared/context/ToastContext';
-import { getTodayString, validateDateInput } from '../../shared/utils/date';
+import { getTodayString, validateDateInput, formatDDMMYYYY, formatRangeDDMMYYYY } from '../../shared/utils/date';
 import ReportCard from './ReportCard';
 import GlucoseTrendChart from './GlucoseTrendChart';
 import { SLOT_CONFIG } from '../readings/ReadingsList';
 import { Calendar, CalendarDays, BarChart2, History, Clock, Sparkles } from 'lucide-react';
-
-function formatDisplayDate(dateStr) {
-  if (!dateStr) return '';
-  const [year, month, day] = dateStr.split('-');
-  const dateObj = new Date(year, month - 1, day);
-  return dateObj.toLocaleDateString('en-US', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  });
-}
-
-function formatRangeDisplay(startDate, endDate) {
-  if (!startDate || !endDate) return '';
-  const [sY, sM, sD] = startDate.split('-');
-  const [eY, eM, eD] = endDate.split('-');
-  const sObj = new Date(sY, sM - 1, sD);
-  const eObj = new Date(eY, eM - 1, eD);
-
-  const startStr = sObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
-  const endStr = eObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
-  return `${startStr} – ${endStr}`;
-}
 
 export default function ReportsView() {
   const { showToast } = useToast();
@@ -93,8 +70,8 @@ export default function ReportsView() {
   };
 
   const currentPeriodLabel = chartPeriod === 'mtd'
-    ? reportData?.mtd ? formatRangeDisplay(reportData.mtd.startDate, reportData.mtd.endDate) : 'This Month'
-    : reportData?.monthly ? formatRangeDisplay(reportData.monthly.startDate, reportData.monthly.endDate) : 'Previous Month';
+    ? reportData?.mtd ? formatRangeDDMMYYYY(reportData.mtd.startDate, reportData.mtd.endDate) : 'This Month'
+    : reportData?.monthly ? formatRangeDDMMYYYY(reportData.monthly.startDate, reportData.monthly.endDate) : 'Previous Month';
 
   const today = getTodayString();
 
@@ -184,7 +161,7 @@ export default function ReportsView() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
             <ReportCard
               title="Daily Report"
-              subtitle={formatDisplayDate(reportData.daily.date)}
+              subtitle={formatDDMMYYYY(reportData.daily.date)}
               stats={reportData.daily}
               icon={CalendarDays}
               colorTheme="pink"
@@ -192,7 +169,7 @@ export default function ReportsView() {
 
             <ReportCard
               title="Month-to-Date"
-              subtitle={formatRangeDisplay(reportData.mtd.startDate, reportData.mtd.endDate)}
+              subtitle={formatRangeDDMMYYYY(reportData.mtd.startDate, reportData.mtd.endDate)}
               stats={reportData.mtd}
               icon={BarChart2}
               colorTheme="blue"
@@ -200,7 +177,7 @@ export default function ReportsView() {
 
             <ReportCard
               title="Monthly (Previous Month)"
-              subtitle={formatRangeDisplay(reportData.monthly.startDate, reportData.monthly.endDate)}
+              subtitle={formatRangeDDMMYYYY(reportData.monthly.startDate, reportData.monthly.endDate)}
               stats={reportData.monthly}
               icon={History}
               colorTheme="emerald"
@@ -220,7 +197,7 @@ export default function ReportsView() {
             <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-0">
               <div>
                 <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                  Daily Slot Readings ({formatDisplayDate(reportData.daily.date)})
+                  Daily Slot Readings ({formatDDMMYYYY(reportData.daily.date)})
                 </h3>
                 <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">Breakdown of recorded slots for this date</p>
               </div>

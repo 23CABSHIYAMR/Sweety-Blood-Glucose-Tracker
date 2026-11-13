@@ -1,7 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
+import { formatDDMMYYYY } from '../../shared/utils/date';
 
 export default function DeleteConfirmModal({ isOpen, onClose, onConfirm, reading, isDeleting }) {
+  // Lock background body scroll while modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
+
   if (!isOpen || !reading) return null;
 
   return (
@@ -25,7 +37,7 @@ export default function DeleteConfirmModal({ isOpen, onClose, onConfirm, reading
         <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2">
           Are you sure you want to delete the <span className="font-semibold text-slate-800 dark:text-slate-200">{reading.slot}</span> reading
           of <span className="font-semibold text-slate-800 dark:text-slate-200">{reading.value} mg/dl</span> on{' '}
-          <span className="font-semibold text-slate-800 dark:text-slate-200">{reading.date}</span>?
+          <span className="font-semibold text-slate-800 dark:text-slate-200">{formatDDMMYYYY(reading.date)}</span>?
           This action cannot be undone.
         </p>
 

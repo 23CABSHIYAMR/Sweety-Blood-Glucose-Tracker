@@ -34,6 +34,17 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
     setError('');
   }, [readingToEdit, isOpen]);
 
+  // Lock background body scroll while modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   // Track which slots are already recorded for the currently selected date (excluding the reading being edited)
