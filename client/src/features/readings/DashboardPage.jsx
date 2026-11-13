@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiRequest } from '../../shared/api/client';
 import { useToast } from '../../shared/context/ToastContext';
-import { isFutureDate } from '../../shared/utils/date';
+import { validateDateInput } from '../../shared/utils/date';
 import ReadingsList from './ReadingsList';
 import ReadingModal from './ReadingModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
+
+const PAGINATION_LIMIT = 15; // Pagination limit is always strictly 15
 
 export default function DashboardPage() {
   const { showToast } = useToast();
@@ -26,7 +28,7 @@ export default function DashboardPage() {
   const fetchReadings = useCallback(async () => {
     setIsLoading(true);
     try {
-      let endpoint = `/readings?page=${currentPage}&limit=15`;
+      let endpoint = `/readings?page=${currentPage}&limit=${PAGINATION_LIMIT}`;
       if (dateFilter) {
         endpoint += `&date=${dateFilter}`;
       }
@@ -46,9 +48,12 @@ export default function DashboardPage() {
   }, [fetchReadings]);
 
   const handleDateFilterChange = (val) => {
-    if (val && isFutureDate(val)) {
-      showToast('Date cannot be in the future.', 'error');
-      return;
+    if (val) {
+      const check = validateDateInput(val);
+      if (!check.valid) {
+        showToast(check.error, 'error');
+        return;
+      }
     }
     setDateFilter(val);
     setCurrentPage(1);
@@ -101,6 +106,7 @@ export default function DashboardPage() {
         pagination={pagination}
         currentPage={currentPage}
         onPageChange={setCurrentPage}
+        limit={PAGINATION_LIMIT}
         dateFilter={dateFilter}
         onDateFilterChange={handleDateFilterChange}
         onAddClick={() => {

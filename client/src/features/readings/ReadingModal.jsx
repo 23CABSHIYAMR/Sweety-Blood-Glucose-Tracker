@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, Calendar, Clock, Activity, Check, Sunrise, Sun, Utensils, Moon } from 'lucide-react';
-import { getTodayString, isFutureDate } from '../../shared/utils/date';
+import { getTodayString, validateDateInput } from '../../shared/utils/date';
 
 const SLOTS = [
   { id: 'Morning (fasting)', label: 'Morning (fasting)', desc: 'Fasting glucose before breakfast', icon: Sunrise },
@@ -56,8 +56,9 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
       return;
     }
 
-    if (isFutureDate(date)) {
-      setError('Date cannot be in the future.');
+    const dateCheck = validateDateInput(date);
+    if (!dateCheck.valid) {
+      setError(dateCheck.error);
       return;
     }
 
@@ -137,8 +138,9 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
                 onChange={(e) => {
                   const val = e.target.value;
                   setDate(val);
-                  if (isFutureDate(val)) {
-                    setError('Date cannot be in the future.');
+                  const check = validateDateInput(val);
+                  if (!check.valid) {
+                    setError(check.error);
                   } else {
                     setError('');
                   }

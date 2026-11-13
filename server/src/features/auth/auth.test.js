@@ -42,7 +42,7 @@ describe('Authentication API (Feature: Auth with Access & Refresh Tokens)', () =
     expect(res.body.error).toMatch(/already exists/i);
   });
 
-  test('POST /api/auth/login - returns fresh accessToken and refreshToken', async () => {
+  test('POST /api/auth/login - returns fresh accessToken and refreshToken and sets secure cookies', async () => {
     const res = await request(app)
       .post('/api/auth/login')
       .send({
@@ -54,6 +54,30 @@ describe('Authentication API (Feature: Auth with Access & Refresh Tokens)', () =
     expect(res.body).toHaveProperty('accessToken');
     expect(res.body).toHaveProperty('refreshToken');
     expect(res.body.user.email).toBe(testUser.email);
+    expect(res.headers['set-cookie']).toBeDefined();
+
+    accessToken = res.body.accessToken;
+    refreshToken = res.body.refreshToken;
+  });
+
+  test('GET /api/auth/me - accepts valid accessToken via Cookie', async () => {
+    const res = await request(app)
+      .get('/api/auth/me')
+      .set('Cookie', [`sweety_access_token=${accessToken}`]);
+
+    expect(res.status).toBe(200);
+    expect(res.body.user.email).toBe(testUser.email);
+  });
+
+  test('POST /api/auth/refresh - successfully rotates tokens via Cookie', async () => {
+    const res = await request(app)
+      .post('/api/auth/refresh')
+      .set('Cookie', [`sweety_refresh_token=${refreshToken}`]);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('accessToken');
+    expect(res.body).toHaveProperty('refreshToken');
+    expect(res.headers['set-cookie']).toBeDefined();
 
     accessToken = res.body.accessToken;
     refreshToken = res.body.refreshToken;

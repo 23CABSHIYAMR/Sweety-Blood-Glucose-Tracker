@@ -18,19 +18,13 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('sweety_logout', handleAutoLogout);
   }, []);
 
-  // Verify stored token on boot
+  // Verify session on boot (Supports secure HTTP Cookies and localStorage)
   useEffect(() => {
     async function loadUser() {
-      if (!accessToken) {
-        setIsLoading(false);
-        return;
-      }
-
       try {
         const data = await apiRequest('/auth/me');
         setUser(data.user);
       } catch (err) {
-        console.error('Failed to authenticate stored token:', err);
         localStorage.removeItem('sweety_access_token');
         localStorage.removeItem('sweety_token');
         localStorage.removeItem('sweety_refresh_token');
@@ -42,7 +36,7 @@ export function AuthProvider({ children }) {
     }
 
     loadUser();
-  }, [accessToken]);
+  }, []);
 
   const login = async (email, password) => {
     const data = await apiRequest('/auth/login', {
@@ -51,13 +45,15 @@ export function AuthProvider({ children }) {
     });
 
     const token = data.accessToken || data.token;
-    localStorage.setItem('sweety_access_token', token);
-    localStorage.setItem('sweety_token', token);
+    if (token) {
+      localStorage.setItem('sweety_access_token', token);
+      localStorage.setItem('sweety_token', token);
+      setAccessToken(token);
+    }
     if (data.refreshToken) {
       localStorage.setItem('sweety_refresh_token', data.refreshToken);
     }
 
-    setAccessToken(token);
     setUser(data.user);
     return data;
   };
@@ -69,13 +65,15 @@ export function AuthProvider({ children }) {
     });
 
     const token = data.accessToken || data.token;
-    localStorage.setItem('sweety_access_token', token);
-    localStorage.setItem('sweety_token', token);
+    if (token) {
+      localStorage.setItem('sweety_access_token', token);
+      localStorage.setItem('sweety_token', token);
+      setAccessToken(token);
+    }
     if (data.refreshToken) {
       localStorage.setItem('sweety_refresh_token', data.refreshToken);
     }
 
-    setAccessToken(token);
     setUser(data.user);
     return data;
   };
@@ -83,12 +81,10 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     const refreshToken = localStorage.getItem('sweety_refresh_token');
     try {
-      if (refreshToken) {
-        await apiRequest('/auth/logout', {
-          method: 'POST',
-          body: JSON.stringify({ refreshToken })
-        });
-      }
+      await apiRequest('/auth/logout', {
+        method: 'POST',
+        body: JSON.stringify(refreshToken ? { refreshToken } : {})
+      });
     } catch (err) {
       // Ignore network errors on logout
     } finally {

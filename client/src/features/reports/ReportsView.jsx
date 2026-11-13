@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiRequest } from '../../shared/api/client';
 import { useToast } from '../../shared/context/ToastContext';
-import { getTodayString, isFutureDate } from '../../shared/utils/date';
+import { getTodayString, validateDateInput } from '../../shared/utils/date';
 import ReportCard from './ReportCard';
 import GlucoseTrendChart from './GlucoseTrendChart';
 import { SLOT_CONFIG } from '../readings/ReadingsList';
@@ -83,8 +83,9 @@ export default function ReportsView() {
 
   const handleDateChange = (val) => {
     const today = getTodayString();
-    if (isFutureDate(val)) {
-      showToast('Reports cannot be generated for future dates.', 'error');
+    const check = validateDateInput(val);
+    if (!check.valid) {
+      showToast(check.error, 'error');
       setSelectedDate(today);
       return;
     }

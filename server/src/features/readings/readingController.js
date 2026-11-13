@@ -103,9 +103,9 @@ async function getReadings(req, res, next) {
 
     queryText += ' ORDER BY date DESC, id DESC';
 
-    if (page && limit) {
+    if (page || limit) {
       const pageNum = Math.max(1, parseInt(page, 10) || 1);
-      const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10) || 20));
+      const limitNum = 15; // Pagination limit is always strictly 15
       const offset = (pageNum - 1) * limitNum;
 
       const countRes = await db.query(

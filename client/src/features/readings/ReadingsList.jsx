@@ -1,6 +1,6 @@
 import React from 'react';
 import { Plus, Edit2, Trash2, Calendar, ChevronLeft, ChevronRight, Droplet, Sunrise, Sun, Utensils, Moon } from 'lucide-react';
-import { getTodayString, isFutureDate } from '../../shared/utils/date';
+import { getTodayString, validateDateInput } from '../../shared/utils/date';
 
 export const SLOT_CONFIG = {
   'Morning (fasting)': {
@@ -66,8 +66,11 @@ export default function ReadingsList({
               value={dateFilter}
               onChange={(e) => {
                 const val = e.target.value;
-                if (val && isFutureDate(val)) {
-                  return; // Strictly prevent future date selection
+                if (val) {
+                  const check = validateDateInput(val);
+                  if (!check.valid) {
+                    return; // Strictly prevent invalid or future dates
+                  }
                 }
                 onDateFilterChange(val);
               }}
@@ -133,7 +136,7 @@ export default function ReadingsList({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
-                  {[1, 2, 3, 4, 5].map((n) => (
+                  {[...Array(15)].map((_, n) => (
                     <tr key={n} className="animate-pulse">
                       <td className="py-4 px-6">
                         <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded"></div>
@@ -312,14 +315,16 @@ export default function ReadingsList({
         )}
 
         {/* Pagination Footer */}
-        {pagination && readings.length!==0 && (
+        {pagination && readings.length !== 0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
-            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <span>
                 Page <span className="font-semibold text-slate-800 dark:text-slate-200">{pagination.page}</span> of{' '}
                 <span className="font-semibold text-slate-800 dark:text-slate-200">{pagination.totalPages || 1}</span> ({pagination.total} total)
               </span>
-
+              <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/60">
+                15 per page
+              </span>
             </div>
 
             {pagination.totalPages > 1 && (

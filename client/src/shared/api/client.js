@@ -1,5 +1,5 @@
 /**
- * API client helper with auto-token injection, automatic refresh token rotation, and error parsing
+ * API client helper with Cookie-based auth, auto-token injection, automatic refresh token rotation, and error parsing
  */
 const API_BASE = '/api';
 
@@ -31,65 +31,72 @@ export async function apiRequest(endpoint, options = {}) {
 
   let response = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
-    headers
+    headers,
+    credentials: 'include' // Always pass and receive secure HTTP cookies
   });
 
   // Handle Token Expiry & Automatic Refresh (Avoid loops on /auth/refresh or /auth/login)
   if (response.status === 401 && !endpoint.startsWith('/auth/refresh') && !endpoint.startsWith('/auth/login')) {
     const refreshToken = localStorage.getItem('sweety_refresh_token');
 
-    if (refreshToken) {
-      if (isRefreshing) {
-        // Queue parallel requests until refresh completes
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then(newToken => {
+    if (isRefreshing) {
+      // Queue parallel requests until refresh completes
+      return new Promise((resolve, reject) => {
+        failedQueue.push({ resolve, reject });
+      }).then(newToken => {
+        if (newToken) {
           headers['Authorization'] = `Bearer ${newToken}`;
-          return fetch(`${API_BASE}${endpoint}`, { ...options, headers }).then(r => r.json());
-        });
+        }
+        return fetch(`${API_BASE}${endpoint}`, { ...options, headers, credentials: 'include' }).then(r => r.json());
+      });
+    }
+
+    isRefreshing = true;
+
+    try {
+      const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(refreshToken ? { refreshToken } : {}),
+        credentials: 'include'
+      });
+
+      if (!refreshRes.ok) {
+        throw new Error('Refresh token invalid or expired');
       }
 
-      isRefreshing = true;
+      const tokenData = await refreshRes.json();
+      const newAccessToken = tokenData.accessToken || tokenData.token;
+      const newRefreshToken = tokenData.refreshToken;
 
-      try {
-        const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken })
-        });
-
-        if (!refreshRes.ok) {
-          throw new Error('Refresh token invalid or expired');
-        }
-
-        const tokenData = await refreshRes.json();
-        const newAccessToken = tokenData.accessToken || tokenData.token;
-        const newRefreshToken = tokenData.refreshToken;
-
+      if (newAccessToken) {
         localStorage.setItem('sweety_access_token', newAccessToken);
         localStorage.setItem('sweety_token', newAccessToken);
-        if (newRefreshToken) {
-          localStorage.setItem('sweety_refresh_token', newRefreshToken);
-        }
-
-        processQueue(null, newAccessToken);
-        isRefreshing = false;
-
-        // Retry original request with newly refreshed token
-        headers['Authorization'] = `Bearer ${newAccessToken}`;
-        response = await fetch(`${API_BASE}${endpoint}`, {
-          ...options,
-          headers
-        });
-      } catch (refreshErr) {
-        processQueue(refreshErr, null);
-        isRefreshing = false;
-        localStorage.removeItem('sweety_access_token');
-        localStorage.removeItem('sweety_token');
-        localStorage.removeItem('sweety_refresh_token');
-        window.dispatchEvent(new Event('sweety_logout'));
-        throw refreshErr;
       }
+      if (newRefreshToken) {
+        localStorage.setItem('sweety_refresh_token', newRefreshToken);
+      }
+
+      processQueue(null, newAccessToken);
+      isRefreshing = false;
+
+      // Retry original request with newly refreshed token
+      if (newAccessToken) {
+        headers['Authorization'] = `Bearer ${newAccessToken}`;
+      }
+      response = await fetch(`${API_BASE}${endpoint}`, {
+        ...options,
+        headers,
+        credentials: 'include'
+      });
+    } catch (refreshErr) {
+      processQueue(refreshErr, null);
+      isRefreshing = false;
+      localStorage.removeItem('sweety_access_token');
+      localStorage.removeItem('sweety_token');
+      localStorage.removeItem('sweety_refresh_token');
+      window.dispatchEvent(new Event('sweety_logout'));
+      throw refreshErr;
     }
   }
 

@@ -42,6 +42,37 @@ async function saveRefreshToken(userId, token) {
   );
 }
 
+const COOKIE_BASE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'lax',
+  path: '/'
+};
+
+const ACCESS_COOKIE_OPTIONS = {
+  ...COOKIE_BASE_OPTIONS,
+  maxAge: 15 * 60 * 1000 // 15 minutes
+};
+
+const REFRESH_COOKIE_OPTIONS = {
+  ...COOKIE_BASE_OPTIONS,
+  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+};
+
+function setAuthCookies(res, accessToken, refreshToken) {
+  if (accessToken) {
+    res.cookie('sweety_access_token', accessToken, ACCESS_COOKIE_OPTIONS);
+  }
+  if (refreshToken) {
+    res.cookie('sweety_refresh_token', refreshToken, REFRESH_COOKIE_OPTIONS);
+  }
+}
+
+function clearAuthCookies(res) {
+  res.clearCookie('sweety_access_token', COOKIE_BASE_OPTIONS);
+  res.clearCookie('sweety_refresh_token', COOKIE_BASE_OPTIONS);
+}
+
 /**
  * Register a new user
  */
@@ -87,6 +118,7 @@ async function register(req, res, next) {
     const refreshToken = generateRefreshToken(newUser);
 
     await saveRefreshToken(newUser.id, refreshToken);
+    setAuthCookies(res, accessToken, refreshToken);
 
     res.status(201).json({
       message: 'Registration successful',
@@ -137,6 +169,7 @@ async function login(req, res, next) {
     const refreshToken = generateRefreshToken(user);
 
     await saveRefreshToken(user.id, refreshToken);
+    setAuthCookies(res, accessToken, refreshToken);
 
     res.json({
       message: 'Login successful',
@@ -159,7 +192,7 @@ async function login(req, res, next) {
  */
 async function refresh(req, res, next) {
   try {
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies?.sweety_refresh_token || req.body?.refreshToken;
 
     if (!refreshToken) {
       return res.status(400).json({ error: 'Refresh token is required.' });
@@ -208,6 +241,8 @@ async function refresh(req, res, next) {
     const newRefreshToken = generateRefreshToken(user);
     await saveRefreshToken(user.id, newRefreshToken);
 
+    setAuthCookies(res, newAccessToken, newRefreshToken);
+
     res.json({
       token: newAccessToken,
       accessToken: newAccessToken,
@@ -223,10 +258,11 @@ async function refresh(req, res, next) {
  */
 async function logout(req, res, next) {
   try {
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies?.sweety_refresh_token || req.body?.refreshToken;
     if (refreshToken) {
       await db.query('DELETE FROM refresh_tokens WHERE token = $1', [refreshToken]);
     }
+    clearAuthCookies(res);
     res.json({ message: 'Logged out successfully.' });
   } catch (err) {
     next(err);

@@ -5,7 +5,9 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || `${JWT_ACCESS_SECRE
 
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  const headerToken = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  const cookieToken = req.cookies && (req.cookies.sweety_access_token || req.cookies.token || req.cookies.accessToken);
+  const token = cookieToken || headerToken;
 
   if (!token) {
     return res.status(401).json({ error: 'Access token required. Please log in.' });
