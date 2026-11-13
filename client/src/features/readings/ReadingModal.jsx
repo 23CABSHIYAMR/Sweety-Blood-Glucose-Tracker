@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, Calendar, Clock, Activity, Check, Sunrise, Sun, Utensils, Moon } from 'lucide-react';
+import { getTodayString, isFutureDate } from '../../shared/utils/date';
 
 const SLOTS = [
   { id: 'Morning (fasting)', label: 'Morning (fasting)', desc: 'Fasting glucose before breakfast', icon: Sunrise },
@@ -7,14 +8,6 @@ const SLOTS = [
   { id: 'After lunch', label: 'After lunch', desc: 'Post-lunch check', icon: Utensils },
   { id: 'After dinner', label: 'After dinner', desc: 'Post-dinner/bedtime check', icon: Moon }
 ];
-
-function getTodayString() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
 
 export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, existingReadings = [] }) {
   const today = getTodayString();
@@ -63,7 +56,7 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
       return;
     }
 
-    if (date > today) {
+    if (isFutureDate(date)) {
       setError('Date cannot be in the future.');
       return;
     }
@@ -141,7 +134,15 @@ export default function ReadingModal({ isOpen, onClose, onSave, readingToEdit, e
                 type="date"
                 value={date}
                 max={today}
-                onChange={(e) => setDate(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setDate(val);
+                  if (isFutureDate(val)) {
+                    setError('Date cannot be in the future.');
+                  } else {
+                    setError('');
+                  }
+                }}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-medium text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-pink-500 transition"
                 required
               />

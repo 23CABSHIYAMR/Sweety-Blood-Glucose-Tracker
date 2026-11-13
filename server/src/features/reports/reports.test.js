@@ -106,5 +106,14 @@ describe('Reports API (Feature: Reports)', () => {
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/valid date in YYYY-MM-DD/i);
   });
+
+  test('GET /api/reports - rejects future date', async () => {
+    const res = await request(app)
+      .get('/api/reports?date=2099-12-31')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/cannot be in the future/i);
+  });
 });
 

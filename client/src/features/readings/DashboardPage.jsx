@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiRequest } from '../../shared/api/client';
 import { useToast } from '../../shared/context/ToastContext';
+import { isFutureDate } from '../../shared/utils/date';
 import ReadingsList from './ReadingsList';
 import ReadingModal from './ReadingModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
@@ -10,6 +11,7 @@ export default function DashboardPage() {
   const [readings, setReadings] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(15); // Default pagination limit (customizable: 10, 15, 20, 50)
   const [dateFilter, setDateFilter] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -25,7 +27,7 @@ export default function DashboardPage() {
   const fetchReadings = useCallback(async () => {
     setIsLoading(true);
     try {
-      let endpoint = `/readings?page=${currentPage}&limit=20`;
+      let endpoint = `/readings?page=${currentPage}&limit=${limit}`;
       if (dateFilter) {
         endpoint += `&date=${dateFilter}`;
       }
@@ -38,11 +40,25 @@ export default function DashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, dateFilter, showToast]);
+  }, [currentPage, limit, dateFilter, showToast]);
 
   useEffect(() => {
     fetchReadings();
   }, [fetchReadings]);
+
+  const handleDateFilterChange = (val) => {
+    if (val && isFutureDate(val)) {
+      showToast('Date cannot be in the future.', 'error');
+      return;
+    }
+    setDateFilter(val);
+    setCurrentPage(1);
+  };
+
+  const handleLimitChange = (newLimit) => {
+    setLimit(newLimit);
+    setCurrentPage(1);
+  };
 
   const handleSaveReading = async (readingData) => {
     if (readingData.id) {
@@ -91,11 +107,10 @@ export default function DashboardPage() {
         pagination={pagination}
         currentPage={currentPage}
         onPageChange={setCurrentPage}
+        limit={limit}
+        onLimitChange={handleLimitChange}
         dateFilter={dateFilter}
-        onDateFilterChange={(val) => {
-          setDateFilter(val);
-          setCurrentPage(1);
-        }}
+        onDateFilterChange={handleDateFilterChange}
         onAddClick={() => {
           setReadingToEdit(null);
           setIsModalOpen(true);
@@ -134,4 +149,3 @@ export default function DashboardPage() {
     </>
   );
 }
-

@@ -28,3 +28,4 @@ export default function ThemeToggle({ className = '', showLabel = false }) {
     </button>
   );
 }
+

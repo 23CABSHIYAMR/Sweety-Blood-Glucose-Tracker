@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiRequest } from '../../shared/api/client';
 import { useToast } from '../../shared/context/ToastContext';
+import { getTodayString, isFutureDate } from '../../shared/utils/date';
 import ReportCard from './ReportCard';
 import GlucoseTrendChart from './GlucoseTrendChart';
 import { SLOT_CONFIG } from '../readings/ReadingsList';
@@ -31,13 +32,7 @@ function formatRangeDisplay(startDate, endDate) {
 
 export default function ReportsView() {
   const { showToast } = useToast();
-  const [selectedDate, setSelectedDate] = useState(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  });
+  const [selectedDate, setSelectedDate] = useState(() => getTodayString());
 
   const [reportData, setReportData] = useState(null);
   const [chartPeriod, setChartPeriod] = useState('mtd'); // 'mtd' | 'monthly'
@@ -86,9 +81,21 @@ export default function ReportsView() {
     }
   };
 
+  const handleDateChange = (val) => {
+    const today = getTodayString();
+    if (isFutureDate(val)) {
+      showToast('Reports cannot be generated for future dates.', 'error');
+      setSelectedDate(today);
+      return;
+    }
+    setSelectedDate(val);
+  };
+
   const currentPeriodLabel = chartPeriod === 'mtd'
     ? reportData?.mtd ? formatRangeDisplay(reportData.mtd.startDate, reportData.mtd.endDate) : 'This Month'
     : reportData?.monthly ? formatRangeDisplay(reportData.monthly.startDate, reportData.monthly.endDate) : 'Previous Month';
+
+  const today = getTodayString();
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -114,7 +121,7 @@ export default function ReportsView() {
             <span>{isSeeding ? 'Seeding...' : '⚡ Seed Demo Data (45 Days)'}</span>
           </button>
 
-          {/* Anchor Date Picker */}
+          {/* Anchor Date Picker (Future dates disabled) */}
           <div className="flex items-center gap-2 flex-1 sm:flex-initial">
             <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider whitespace-nowrap hidden sm:inline">
               Anchor:
@@ -123,9 +130,11 @@ export default function ReportsView() {
               <Calendar className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 top-2.5 pointer-events-none" />
               <input
                 type="date"
+                max={today}
                 value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
+                onChange={(e) => handleDateChange(e.target.value)}
                 className="w-full sm:w-auto pl-9 pr-3 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-pink-500 transition text-slate-800 dark:text-slate-100"
+                title="Anchor date for clinical reports (future dates disabled)"
               />
             </div>
           </div>
@@ -133,9 +142,36 @@ export default function ReportsView() {
       </div>
 
       {isLoading ? (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center text-slate-400 dark:text-slate-500 text-sm">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-pink-500 border-t-transparent mb-3"></div>
-          <p>Calculating glucose aggregations...</p>
+        /* SKELETON LOADER FOR REPORTS */
+        <div className="space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            {[1, 2, 3].map((n) => (
+              <div key={n} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-6 shadow-xs animate-pulse space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800"></div>
+                    <div className="space-y-1.5">
+                      <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                      <div className="h-3 w-16 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                    </div>
+                  </div>
+                  <div className="h-5 w-16 bg-slate-200 dark:bg-slate-800 rounded-full"></div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 pt-2">
+                  {[1, 2, 3].map((m) => (
+                    <div key={m} className="bg-slate-100 dark:bg-slate-800/60 p-2.5 rounded-xl space-y-2">
+                      <div className="h-3 w-8 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                      <div className="h-5 w-12 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs animate-pulse h-72">
+            <div className="h-5 w-40 bg-slate-200 dark:bg-slate-800 rounded mb-6"></div>
+            <div className="h-48 w-full bg-slate-100 dark:bg-slate-800/40 rounded-xl"></div>
+          </div>
         </div>
       ) : error ? (
         <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 p-6 rounded-2xl text-rose-700 dark:text-rose-300 text-sm text-center">

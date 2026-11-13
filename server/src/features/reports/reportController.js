@@ -81,6 +81,11 @@ async function getReports(req, res, next) {
       return res.status(400).json({ error: 'Please provide a valid date in YYYY-MM-DD format.' });
     }
 
+    const today = formatDate(new Date());
+    if (selectedDate > today) {
+      return res.status(400).json({ error: 'Date cannot be in the future.' });
+    }
+
     const ranges = calculateRanges(selectedDate);
 
     const [dailyStats, dailyReadingsRes, mtdStats, monthlyStats] = await Promise.all([

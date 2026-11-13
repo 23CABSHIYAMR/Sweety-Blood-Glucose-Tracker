@@ -1,5 +1,6 @@
 import React from 'react';
 import { Plus, Edit2, Trash2, Calendar, ChevronLeft, ChevronRight, Droplet, Sunrise, Sun, Utensils, Moon } from 'lucide-react';
+import { getTodayString, isFutureDate } from '../../shared/utils/date';
 
 export const SLOT_CONFIG = {
   'Morning (fasting)': {
@@ -36,6 +37,7 @@ export default function ReadingsList({
   pagination,
   currentPage,
   onPageChange,
+  limit = 15,
   dateFilter,
   onDateFilterChange,
   onAddClick,
@@ -43,6 +45,8 @@ export default function ReadingsList({
   onDeleteClick,
   isLoading
 }) {
+  const today = getTodayString();
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Top Action Bar */}
@@ -53,15 +57,22 @@ export default function ReadingsList({
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
-          {/* Date Filter */}
+          {/* Date Filter (Future dates disabled) */}
           <div className="relative flex items-center">
             <Calendar className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3 pointer-events-none" />
             <input
               type="date"
+              max={today}
               value={dateFilter}
-              onChange={(e) => onDateFilterChange(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val && isFutureDate(val)) {
+                  return; // Strictly prevent future date selection
+                }
+                onDateFilterChange(val);
+              }}
               className="w-full sm:w-auto pl-9 pr-3 py-2 text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-pink-500 transition text-slate-700 dark:text-slate-200"
-              title="Filter by specific date"
+              title="Filter by specific date (future dates disabled)"
             />
             {dateFilter && (
               <button
@@ -87,10 +98,67 @@ export default function ReadingsList({
       {/* Content Container */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs overflow-hidden transition-colors duration-200">
         {isLoading ? (
-          <div className="p-12 text-center text-slate-400 dark:text-slate-500 text-sm">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-pink-500 border-t-transparent mb-3"></div>
-            <p>Loading glucose logs...</p>
-          </div>
+          /* SKELETON LOADER FOR DASHBOARD TABLE & MOBILE CARDS */
+          <>
+            {/* Mobile Skeleton Cards */}
+            <div className="sm:hidden divide-y divide-slate-100 dark:divide-slate-800/80">
+              {[1, 2, 3, 4].map((n) => (
+                <div key={n} className="p-4 space-y-3 animate-pulse">
+                  <div className="flex items-center justify-between">
+                    <div className="h-6 w-32 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+                    <div className="h-5 w-16 bg-slate-200 dark:bg-slate-800 rounded-md"></div>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <div className="h-7 w-20 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                    <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                  </div>
+                  <div className="pt-2 border-t border-slate-50 dark:border-slate-800/60 flex items-center justify-end gap-2">
+                    <div className="h-7 w-14 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+                    <div className="h-7 w-16 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop / Tablet Skeleton Table */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-slate-50/75 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                  <tr>
+                    <th className="py-3.5 px-6">Date</th>
+                    <th className="py-3.5 px-6">Slot</th>
+                    <th className="py-3.5 px-6">Value (mg/dl)</th>
+                    <th className="py-3.5 px-6">Status</th>
+                    <th className="py-3.5 px-6 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <tr key={n} className="animate-pulse">
+                      <td className="py-4 px-6">
+                        <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="h-6 w-32 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="h-5 w-16 bg-slate-200 dark:bg-slate-800 rounded"></div>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="h-5 w-16 bg-slate-200 dark:bg-slate-800 rounded-md"></div>
+                      </td>
+                      <td className="py-4 px-6 text-right">
+                        <div className="inline-flex items-center gap-1.5 justify-end">
+                          <div className="h-7 w-7 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+                          <div className="h-7 w-7 bg-slate-200 dark:bg-slate-800 rounded-lg"></div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : readings.length === 0 ? (
           <div className="p-8 sm:p-12 text-center">
             <div className="w-14 h-14 mx-auto rounded-2xl bg-pink-50 dark:bg-pink-950/40 text-pink-500 dark:text-pink-400 flex items-center justify-center mb-3">
@@ -244,29 +312,36 @@ export default function ReadingsList({
         )}
 
         {/* Pagination Footer */}
-        {pagination && pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
-            <span className="text-xs text-slate-500 dark:text-slate-400">
-              Page {pagination.page} of {pagination.totalPages} ({pagination.total} total)
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                disabled={currentPage <= 1}
-                onClick={() => onPageChange(currentPage - 1)}
-                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                aria-label="Previous page"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                disabled={currentPage >= pagination.totalPages}
-                onClick={() => onPageChange(currentPage + 1)}
-                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
-                aria-label="Next page"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+        {pagination && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-6 py-3.5 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40">
+            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+              <span>
+                Page <span className="font-semibold text-slate-800 dark:text-slate-200">{pagination.page}</span> of{' '}
+                <span className="font-semibold text-slate-800 dark:text-slate-200">{pagination.totalPages || 1}</span> ({pagination.total} total)
+              </span>
+
             </div>
+
+            {pagination.totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <button
+                  disabled={currentPage <= 1}
+                  onClick={() => onPageChange(currentPage - 1)}
+                  className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  disabled={currentPage >= pagination.totalPages}
+                  onClick={() => onPageChange(currentPage + 1)}
+                  className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  aria-label="Next page"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
