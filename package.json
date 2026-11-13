@@ -9,7 +9,9 @@
     "client:build": "npm --prefix client run build",
     "db:init": "npm --prefix server run db:init",
     "db:seed": "npm --prefix server run db:seed",
-    "test": "npm --prefix server test"
+    "test": "npm --prefix server test",
+    "test:client": "npm --prefix client test",
+    "test:all": "npm --prefix server test && npm --prefix client test"
   },
   "keywords": [
     "blood-glucose",
